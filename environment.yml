@@ -1,0 +1,9 @@
+name: mta_int_tools_gui
+channels:
+ - conda-forge
+ - defaults
+dependencies:
+ - python=3.11
+ - pip
+ - pip:
+   - streamlit
