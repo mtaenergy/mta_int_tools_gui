@@ -1,11 +1,7 @@
-# mta_ops_gui
+# Documentation
 
-## Pushing a new streamlit version
-1. Rebuild and push
-2. Run following in terminal to prune all unused containers
-    docker system prune -a
+The blog post that accompanies this repository [can be found here on my website](https://benalexkeen.com/deploying-streamlit-applications-with-azure-app-services/).
 
+# Deployment
 
-## Tutorials on creating streamlit apps in Azure
-- https://towardsdatascience.com/beginner-guide-to-streamlit-deployment-on-azure-f6618eee1ba9
-- https://medium.com/towards-data-science/beginner-guide-to-streamlit-deployment-on-azure-part-2-cf14bb201b8e
+[![Deploy To Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbenalexkeen%2Fstreamlit-azure-app-services%2Fmain%2Fazuredeploy.json)
