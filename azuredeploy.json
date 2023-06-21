@@ -4,8 +4,8 @@
     "parameters": {
       "webAppName": {
         "type": "string",
-        "defaultValue": "[concat('mtae_app-', uniqueString(resourceGroup().id))]",
-        "minLength": 2,
+        "defaultValue": "[mta-ops-dashboard]",
+        "minLength": 1,
         "metadata": {
           "description": "Web app name."
         }
@@ -47,7 +47,7 @@
       },
       "repoUrl": {
         "type": "string",
-        "defaultValue": "https://github.com/ma-2pac/streamlit_test.git",
+        "defaultValue": "https://github.com/mtaenergy/mta_int_tools_gui.git",
         "metadata": {
           "description": "Git Repo URL"
         }
@@ -118,7 +118,7 @@
             "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
         ],
         "properties": {
-            "appCommandLine": "python -m streamlit run app/streamlit_app.py --server.port 8000 --server.address 0.0.0.0"
+            "appCommandLine": "python -m streamlit run app/0_Dashboard.py --server.port 8000 --server.address 0.0.0.0"
         }
     }
     ]
