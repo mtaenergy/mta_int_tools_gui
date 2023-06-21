@@ -12,10 +12,10 @@
             "value": "PYTHON|3.9"
         },
         "repoUrl": {
-            "value": "https://github.com/mtaenergy/mta_int_tools_gui.git"
+            "value": "https://github.com/ma-2pac/streamlit_test.git"
         },
         "repoBranch": {
-            "value": "feat-arm_template"
+            "value": "main"
         }
     }
 }

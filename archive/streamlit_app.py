@@ -8,14 +8,14 @@ st.set_page_config(
 )
 
 
-@st.cache_data
+@st.experimental_memo
 def get_data():
     source = data.stocks()
     source = source[source.date.gt("2004-01-01")]
     return source
 
 
-@st.cache_data(ttl=60 * 60 * 24)
+@st.experimental_memo(ttl=60 * 60 * 24)
 def get_chart(data):
     hover = alt.selection_single(
         fields=["date"],

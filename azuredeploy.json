@@ -4,7 +4,7 @@
     "parameters": {
       "webAppName": {
         "type": "string",
-        "defaultValue": "[concat('webApp-', uniqueString(resourceGroup().id))]",
+        "defaultValue": "[concat('mtae_app-', uniqueString(resourceGroup().id))]",
         "minLength": 2,
         "metadata": {
           "description": "Web app name."
@@ -47,14 +47,14 @@
       },
       "repoUrl": {
         "type": "string",
-        "defaultValue": "https://github.com/mtaenergy/mta_int_tools_gui.git",
+        "defaultValue": "https://github.com/ma-2pac/streamlit_test.git",
         "metadata": {
           "description": "Git Repo URL"
         }
       },
       "repoBranch": {
         "type": "string",
-        "defaultValue": "feat-arm_template",
+        "defaultValue": "main",
         "metadata": {
           "description": "Git Repo branch to deploy"
         }
