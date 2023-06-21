@@ -54,7 +54,7 @@
       },
       "repoBranch": {
         "type": "string",
-        "defaultValue": "main",
+        "defaultValue": "feat-azure_redeploy",
         "metadata": {
           "description": "Git Repo branch to deploy"
         }
