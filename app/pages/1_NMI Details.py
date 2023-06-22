@@ -1,14 +1,8 @@
 import streamlit as st
-import matplotlib.pyplot as plt
 import pandas as pd
-import sqlite3
 from geopy.geocoders import Nominatim
-import folium
 import plotly.express as px
 from streamlit import session_state
-import mtatk
-import sys
-import os
 from PIL import Image
 
 

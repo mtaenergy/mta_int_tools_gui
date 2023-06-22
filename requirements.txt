@@ -1,8 +1,10 @@
-altair<5
-click==8
-streamlit==1.5.0
+altair
+click
+streamlit
 pandas
-protobuf==3.20.*
+protobuf
 vega_datasets
 geopy
 folium
+plotly
+git+https://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:x-oauth-basic@github.com/mtaenergy/mtatk.git@main
