@@ -4,8 +4,8 @@
     "parameters": {
       "webAppName": {
         "type": "string",
-        "defaultValue": "[concat('webApp-', uniqueString(resourceGroup().id))]",
-        "minLength": 2,
+        "defaultValue": "[mta-ops-dashboard]",
+        "minLength": 1,
         "metadata": {
           "description": "Web app name."
         }
@@ -54,7 +54,7 @@
       },
       "repoBranch": {
         "type": "string",
-        "defaultValue": "feat-arm_template",
+        "defaultValue": "feat-azure_redeploy",
         "metadata": {
           "description": "Git Repo branch to deploy"
         }
@@ -118,7 +118,7 @@
             "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
         ],
         "properties": {
-            "appCommandLine": "python -m streamlit run app/streamlit_app.py --server.port 8000 --server.address 0.0.0.0"
+            "appCommandLine": "python -m streamlit run app/0_Dashboard.py --server.port 8000 --server.address 0.0.0.0"
         }
     }
     ]
