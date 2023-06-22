@@ -8,8 +8,13 @@ import pandas as pd
 from pathlib import Path
 import base64
 from datetime import date
+import logging
 
-cert=r"C:\Users\Marco Tupaz\MTA Energy\MTA Energy - Documents\IT\AEMO_CSRs/kv-mta-MTAENERGY-Prod-20221111.pem"
+current_path = Path(__file__).parent.parent.parent
+cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
+logging.info(cert)
+
+#cert=r"C:\Users\Marco Tupaz\MTA Energy\MTA Energy - Documents\IT\AEMO_CSRs/kv-mta-MTAENERGY-Prod-20221111.pem"
 
 
 def setup_API_con():

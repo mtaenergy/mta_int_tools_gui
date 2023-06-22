@@ -14,8 +14,6 @@ from PIL import Image
 
 from modules.utils import *
 
-
-
 #global variables
 reading_type =['Select a reading type','Export kWh', 'Import kWh', 'Export kVARh', 'Import kVARh', 'Cost ex GST', 'Carbon kg']
 nmi_list =['Select a NMI']

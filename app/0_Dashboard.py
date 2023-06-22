@@ -14,9 +14,6 @@ st.set_page_config(
     layout="wide"
 )
 
-
-
-
 if 'sub_key' not in session_state:
     session_state['sub_key'] = False
 
@@ -28,6 +25,8 @@ session_state.sub_key=False
 #setup function for home page
 
 def home_page():
+
+
 
     with st.container():
         col1, col2, col3 = st.columns(3)
