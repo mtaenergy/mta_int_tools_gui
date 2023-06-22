@@ -11,10 +11,9 @@ import sys
 import os
 from PIL import Image
 
-#sys.path.insert(0,'..')
 
 from modules.utils import *
-#from modules.utils import * api_con, sql_con, get_nmi_msats_data, get_nmi_tariff, get_nmi_customer, get_nmi_participants, convert_df
+
 
 
 #global variables
@@ -24,26 +23,6 @@ nmi_list=nmi_list+get_nmi_list() #add all nmi's in database to list
 
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
-
-
-# Add the image to the header with resizing
-# st.markdown(
-#     f"""
-#     <style>
-#     .header-img {{
-#         display: flex;
-#         align-items: center;
-#         justify-content: center;
-#         height: 50px;
-#         background-image: url('{img_path}');
-#         background-size: contain;
-#         background-repeat: no-repeat;
-#         background-position: right;
-#     }}
-#     </style>
-#     """,
-#     unsafe_allow_html=True
-# )
 
 
 
