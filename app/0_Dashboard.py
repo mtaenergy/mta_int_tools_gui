@@ -112,15 +112,19 @@ def home_page():
                 st.metric("Total Carbon Emissions kg",1000)
 
         #container to select pi chart customer
+        with st.container():
+
+            col1, col2, col3 = st.columns(3)
+
+            with col2:
+                #customer select
+                customer_sel= st.selectbox(" ", client_list)
 
 
         #container with pi charts
         with st.container():
 
             col1, col2 = st.columns(2)
-
-            #customer select
-            customer_sel= st.selectbox(" ", client_list)
 
             with col1:
 
