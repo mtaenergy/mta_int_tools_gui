@@ -14,9 +14,6 @@ current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
 logging.info(cert)
 
-username="mtaenergy_admin"
-password ="Wombat100"
-
 
 def setup_API_con():
 
@@ -122,10 +119,44 @@ def get_nmi_list():
     return nmi_list
 
 
+def read_login_pem(file_path:str):
+
+    #set lists
+    names_list =[]
+    username_list=[]
+    password_list=[]
+
+    #logging.info(file_path)
+
+    #open login.pem file and append login details to lists
+    with open(f'{file_path}/logins.pem','r') as file:
+        for line in file:
+            line=line.strip()
+            name, username, password = line.split(',')
+            names_list.append(name)
+            username_list.append(username)
+            password_list.append(password)
+
+    # logging.info(names_list)
+    # logging.info(username_list)
+    # logging.info(password_list)
+
+    #return lists
+    return names_list,username_list, password_list
+
+
 @st.cache_data
 def convert_df(df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
     return df.to_csv().encode('utf-8')
 
 api_con = setup_API_con()
+
+#get default username and password from logins.pem
+_,username_list, password_list = read_login_pem(Path(__file__).parent.parent.parent)
+
+#use first line credentials as default login
+username=username_list[0]
+password=password_list[0]
+
 sql_con = setup_SQL_con(username=username,password=password)
