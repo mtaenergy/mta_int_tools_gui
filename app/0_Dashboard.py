@@ -84,9 +84,9 @@ def home_page():
 
         #container for lookback selector
         with st.container():
-            elected_period = st.sidebar.radio("Select Period", ("Yesterday", "Last Week", "Last Month", "Last Year"))
+            elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year"))
 
-
+            logging.info(elected_period)
 
         #container for high level statistics
         with st.container():
@@ -101,15 +101,15 @@ def home_page():
 
             with col2:
                 #total costs
-                st.metric("Total Cost $AUD",1000)
+                st.metric("Total Cost $AUD",get_cost_stat(elected_period))
 
             with col3:
                 #total costs
-                st.metric("Total Eletricity Consumption kWh",1000)
+                st.metric("Total Eletricity Consumption kWh",get_consump_stat(elected_period))
 
             with col4:
                 #total costs
-                st.metric("Total Carbon Emissions kg",1000)
+                st.metric("Total Carbon Emissions kg",get_carbon_stat(elected_period))
 
         #container to select pi chart customer
         with st.container():

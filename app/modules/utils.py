@@ -147,8 +147,118 @@ def read_login_pem(file_path:str):
 def get_cost_stat(lookback_op: str):
 
     #casewhere where depending on the lookback option chosen, the query will be different
-    pass
+    if lookback_op =="Last Month":
+        query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last 3 Months":
+        query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last 6 Months":
+        query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last Year":
+        query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
+                    "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
+    else:
+        st.error("Invalid date range chosen")
 
+    #logging.info(query)
+
+    #retrieve value from sql
+    total_cost = sql_con.query_sql(query=query,database='timeseries')
+
+    return total_cost.iloc[0].round(2)
+
+def get_consump_stat(lookback_op: str):
+
+    #casewhere where depending on the lookback option chosen, the query will be different
+    if lookback_op =="Last Month":
+        query  = ("SELECT SUM(volume) as total_consump "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE charge_group = 'Commodity' "
+                  "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last 3 Months":
+        query  = ("SELECT SUM(volume) as total_consump "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE charge_group = 'Commodity' "
+                  "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last 6 Months":
+        query  = ("SELECT SUM(volume) as total_consump "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE charge_group = 'Commodity' "
+                  "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last Year":
+        query  = ("SELECT SUM(volume) as total_consump "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE charge_group = 'Commodity' "
+                  "AND bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
+                    "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
+    else:
+        st.error("Invalid date range chosen")
+
+    #logging.info(query)
+
+    #retrieve value from sql
+    total_consump = sql_con.query_sql(query=query,database='timeseries')
+
+    return total_consump.iloc[0].round(2)
+
+def get_carbon_stat(lookback_op: str):
+
+    #casewhere where depending on the lookback option chosen, the query will be different
+    if lookback_op =="Last Month":
+        query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE charge_name ='Carbon' "
+                  "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last 3 Months":
+        query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE charge_name ='Carbon' "
+                  "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last 6 Months":
+        query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE charge_name ='Carbon' "
+                  "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last Year":
+        query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
+                  "FROM mtae_ops_billing_billing_records_prod "
+                  "WHERE charge_name ='Carbon' "
+                  "AND bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
+                    "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
+    else:
+        st.error("Invalid date range chosen")
+
+    #logging.info(query)
+
+    #retrieve value from sql
+    total_cost = sql_con.query_sql(query=query,database='timeseries')
+
+    return total_cost.iloc[0].round(2)
 
 @st.cache_data
 def convert_df(df):
