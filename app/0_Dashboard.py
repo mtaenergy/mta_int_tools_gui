@@ -20,6 +20,9 @@ st.set_page_config(
 if 'sub_key' not in session_state:
     session_state['sub_key'] = False
 
+if 'auth_key' not in session_state:
+    session_state['auth_key'] = False
+
 #reset sub key if returned to dashboard
 session_state.sub_key=False
 
@@ -61,6 +64,7 @@ def home_page():
         st.warning("Please enter a username and password")
 
     if authentication_status:
+        session_state.auth_key=True
         #run app
 
         #configure sidebar
