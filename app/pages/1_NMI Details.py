@@ -24,6 +24,7 @@ def nmi_page():
 
     if session_state.auth_key:
 
+
         #temporary measure as i figure out how to add logo to be contained to top right
         with st.container():
                 

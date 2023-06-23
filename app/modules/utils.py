@@ -144,6 +144,11 @@ def read_login_pem(file_path:str):
     #return lists
     return names_list,username_list, password_list
 
+def get_cost_stat(lookback_op: str):
+
+    #casewhere where depending on the lookback option chosen, the query will be different
+    pass
+
 
 @st.cache_data
 def convert_df(df):
