@@ -122,6 +122,32 @@ def get_nmi_list():
     return nmi_list
 
 
+def read_login_pem(file_path:str):
+
+    #set lists
+    names_list =[]
+    username_list=[]
+    password_list=[]
+
+    logging.info(file_path)
+
+    #open login.pem file and append login details to lists
+    with open(f'{file_path}/logins.pem','r') as file:
+        for line in file:
+            line=line.strip()
+            name, username, password = line.split(',')
+            names_list.append(name)
+            username_list.append(username)
+            password_list.append(password)
+
+    logging.info(names_list)
+    logging.info(username_list)
+    logging.info(password_list)
+
+    #return lists
+    return names_list,username_list, password_list
+
+
 @st.cache_data
 def convert_df(df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
