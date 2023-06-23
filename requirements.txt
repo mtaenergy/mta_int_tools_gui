@@ -1,6 +1,7 @@
 altair
 click
 streamlit
+streamlit_authenticator
 pandas
 protobuf
 vega_datasets

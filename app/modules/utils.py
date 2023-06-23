@@ -14,7 +14,8 @@ current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
 logging.info(cert)
 
-#cert=r"C:\Users\Marco Tupaz\MTA Energy\MTA Energy - Documents\IT\AEMO_CSRs/kv-mta-MTAENERGY-Prod-20221111.pem"
+username="mtaenergy_admin"
+password ="Wombat100"
 
 
 def setup_API_con():
@@ -24,11 +25,9 @@ def setup_API_con():
 
     return api_connector
 
-def setup_SQL_con():
+def setup_SQL_con(username: str, password: str) -> SQLConnector:
 
     #create SQL Connection object
-    username="mtaenergy_admin"
-    password ="Wombat100"
     sql_con = SQLConnector(username=username,password=password)
 
     return sql_con
@@ -129,4 +128,4 @@ def convert_df(df):
     return df.to_csv().encode('utf-8')
 
 api_con = setup_API_con()
-sql_con = setup_SQL_con()
+sql_con = setup_SQL_con(username=username,password=password)
