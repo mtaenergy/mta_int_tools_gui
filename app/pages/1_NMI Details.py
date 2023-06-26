@@ -4,6 +4,7 @@ from geopy.geocoders import Nominatim
 import plotly.express as px
 from streamlit import session_state
 from PIL import Image
+import mtatk
 
 
 from modules.utils import *
@@ -61,6 +62,7 @@ def nmi_page():
 
                 #update nmi list if specific site is chosen
                 if 'site_in' in locals():
+
                     if site_in !='Select a site' or site_in!=None:
                         nmi_list= get_site_nmis(site_alias=site_in)
                     else:
@@ -97,19 +99,35 @@ def nmi_page():
             if session_state.sub_key:
                 #st.header("Display map and nmi deets")
 
+                #setup site and nmi class using nmi_in
+                site_id = get_site_id(nmi=nmi_in)
+                site = mtatk.mta_class_site.Site(site_id=site_id)
+                nmi = mtatk.mta_class_nmi.NMI(nmi=site.site_details.nmi, start_date=start_dt_in, end_date=end_dt_in,CERT=cert)
+
+
                 #get df entry for thechosen nmi
-                nmi_details = get_nmi_msats_data(nmi=nmi_in)
-                nmi_reg_details = get_nmi_tariff(nmi=nmi_in)
+                # nmi_details = get_nmi_msats_data(nmi=nmi_in)
+                # nmi_reg_details = get_nmi_tariff(nmi=nmi_in)
+                # nmi_site_details = get_nmi_customer(nmi=nmi_in)
+                # nmi_party_details = get_nmi_participants(nmi=nmi_in)
+
+
+                nmi_details = nmi.standing_data.master_data
+                nmi_reg_details = nmi.standing_data.registers
+                nmi_party_details = nmi.standing_data.roles
                 nmi_site_details = get_nmi_customer(nmi=nmi_in)
-                nmi_party_details = get_nmi_participants(nmi=nmi_in)
 
                 #nmi codes
-                customer_class_code = nmi_details['customer_classification_code']
-                customer_thresh_code = nmi_details['customer_threshold_code']
-                jurisdiction_code = nmi_details['jurisdiction_code']
+                customer_class_code = nmi_details['CustomerClassificationCode']
+                customer_thresh_code = nmi_details['CustomerThresholdCode']
+                jurisdiction_code = nmi_details['JurisdictionCode']
 
-                #tariff info
-                network_tariff_code = nmi_reg_details['network_tariff_code']
+                #TARIFF INFO
+                #order reg details
+                nmi_reg_details = nmi_reg_details.sort_values('CreationDate',ascending=False)
+
+                #get tariff code
+                network_tariff_code = nmi_reg_details['NetworkTariffCode'].iloc[0]
 
                 #site info
                 site_customer = nmi_site_details['master_customer']
@@ -118,10 +136,10 @@ def nmi_page():
                 site_address = nmi_site_details['site_address']
 
                 #only keep required columns from nmi_party_details
-                nmi_party_details=nmi_party_details[['party','role','from_date']]
+                nmi_party_details=nmi_party_details[['Party','Role','CreationDate']]
 
                 #rename colummns
-                nmi_party_details = nmi_party_details.rename(columns={"party": "Party", 'role': 'Role', 'from_date': 'From Date'})
+                #nmi_party_details = nmi_party_details.rename(columns={"party": "Party", 'role': 'Role', 'from_date': 'From Date'})
 
                 #replace AUS with australia
                 site_address = site_address.replace("AUS","Australia")

@@ -322,6 +322,24 @@ def get_site_nmis(site_alias: str):
     #retuen list of nmis
     return sorted(site_bill_df['site_nmi'].unique().tolist())
 
+
+def get_site_id(nmi: str)->str:
+    #setup query
+    table_name="site"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE site_nmi='{nmi}' "
+             f"ORDER BY site_live_date desc")
+    
+    # get row containing the desired site id
+    site_id_df = sql_con.query_sql(query=query,database='billing') 
+
+    #get value of site_id
+    site_id = site_id_df['site_id'].iloc[0]
+
+    return site_id
+    
+
+
 @st.cache_data
 def convert_df(df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
