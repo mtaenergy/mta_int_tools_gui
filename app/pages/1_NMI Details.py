@@ -10,8 +10,11 @@ from modules.utils import *
 
 #global variables
 reading_type =['Select a reading type','Export kWh', 'Import kWh', 'Export kVARh', 'Import kVARh', 'Cost ex GST', 'Carbon kg']
-nmi_list =['Select a NMI']
-nmi_list=nmi_list+get_nmi_list() #add all nmi's in database to list
+global_nmi_list =['Select a NMI']
+global_nmi_list=global_nmi_list+get_nmi_list() #add all nmi's in database to list
+
+customer_list=['Select a customer','Best and Less Pty Ltd','TJX Australia Pty Ltd']
+site_list = ['Select a site']
 
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
@@ -46,6 +49,25 @@ def nmi_page():
             col1, col2 =st.columns(2)
 
             with col1:
+
+                
+                customer_in = st.selectbox("Select a customer",customer_list)
+                if customer_in != 'Select a customer':
+
+                    #generate a site list based on customer selected 
+                    site_list = ['Select a site'] +get_customer_sites(customer_in)
+
+                    site_in = st.selectbox("Select a site",site_list)
+
+                #update nmi list if specific site is chosen
+                if 'site_in' in locals():
+                    if site_in !='Select a site' or site_in!=None:
+                        nmi_list= get_site_nmis(site_alias=site_in)
+                    else:
+                        nmi_list=global_nmi_list
+                else:
+                    nmi_list=global_nmi_list
+
                 nmi_in = st.selectbox("Select a NMI", nmi_list)
                 read_in = st.selectbox("Select an option", reading_type)
 
