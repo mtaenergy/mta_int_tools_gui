@@ -4,6 +4,7 @@ from streamlit import session_state
 from PIL import Image
 import pickle
 from pathlib import Path
+import plotly.graph_objects as go
 
 from modules.utils import *
 
@@ -26,7 +27,9 @@ if 'auth_key' not in session_state:
 #reset sub key if returned to dashboard
 session_state.sub_key=False
 
-#st.sidebar.success("Page selector")
+
+#define list of all clients
+client_list = ['Select a customer','Best and Less Pty Ltd','TJX Australia Pty Ltd']
 
 
 
@@ -79,16 +82,84 @@ def home_page():
             with col2:
                 st.image(Image.open(img_path),use_column_width=True)
 
+        #container for lookback selector
+        with st.container():
+            elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year"))
+
+            logging.info(elected_period)
 
         #container for high level statistics
         with st.container():
 
-            col1, col2, col3, col4, col5 = st.columns(5)
+            col1, col2, col3, col4 = st.columns(4)
 
             with col1:
                 #number of serviced sites
                 num_sites = len(get_nmi_list())
 
-                st.subheader(f'Number of serviced sites: {num_sites}')
+                st.metric('Number of serviced sites',num_sites)
+
+            with col2:
+                #total costs
+                st.metric("Total Cost $AUD",get_cost_stat(elected_period))
+
+            with col3:
+                #total costs
+                st.metric("Total Eletricity Consumption kWh",get_consump_stat(elected_period))
+
+            with col4:
+                #total costs
+                st.metric("Total Carbon Emissions kg",get_carbon_stat(elected_period))
+
+        #container to select pi chart customer
+        with st.container():
+
+            col1, col2, col3 = st.columns(3)
+
+            with col2:
+                #customer select
+                customer_sel= st.selectbox(" ", client_list)
+
+
+        #container with pi charts
+        with st.container():
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+
+                if customer_sel !='Select a customer':
+
+                    #pi chart for site consumption
+
+                    labels = ['Category 1', 'Category 2', 'Category 3']
+                    values = [30, 40, 30]
+
+                    # Create the pie chart using Plotly
+                    fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
+
+                    # Set the chart layout
+                    fig.update_layout(title='Consumption kWh Distribution')
+
+                    # Display the pie chart in Streamlit
+                    st.plotly_chart(fig)
+
+            
+            with col2:
+
+                if customer_sel !='Select a customer':
+
+                    #pi chart for site carbon
+                    labels = ['Category 4', 'Category 5', 'Category 6']
+                    values = [30, 40, 30]
+
+                    # Create the pie chart using Plotly
+                    fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
+
+                    # Set the chart layout
+                    fig.update_layout(title='Carbon kg Distribution')
+
+                    # Display the pie chart in Streamlit
+                    st.plotly_chart(fig)
 
 home_page()
