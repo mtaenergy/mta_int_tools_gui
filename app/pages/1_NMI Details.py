@@ -10,11 +10,11 @@ import mtatk
 from modules.utils import *
 
 #global variables
-reading_type =['Select a reading type','Export kWh', 'Import kWh', 'Export kVARh', 'Import kVARh', 'Cost ex GST', 'Carbon kg']
+reading_type =['Select a reading type','Export kWh', 'Import kWh', 'Demand kW', 'Demand kVA', 'Cost ex GST', 'Carbon kg']
 global_nmi_list =['Select a NMI']
 global_nmi_list=global_nmi_list+get_nmi_list() #add all nmi's in database to list
 
-customer_list=['Select a customer','Best and Less Pty Ltd','TJX Australia Pty Ltd']
+customer_list=['Select a customer','Best and Less Pty Ltd']
 site_list = ['Select a site']
 
 #image path
@@ -182,23 +182,33 @@ def nmi_page():
     
                 #filter for reading type
                 if read_in =='Export kWh':
-                    plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='export_kwh']
+                    #plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='export_kwh']
+                    plot_ser = nmi.meter_data.consumption_kwh
 
                 elif read_in =='Import kWh':
-                    plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='import_kwh']
+                    #plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='import_kwh']
+                    plot_ser = nmi.meter_data.generation_kwh
+
+                elif read_in == 'Demand kW':
+                    plot_ser = nmi.meter_data.demand_kw
+
+                elif read_in =='Demand kVA':
+                    plot_ser = nmi.meter_data.demand_kva
 
                 else:
-                    plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='export_kwh']
-                
+                    #plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='export_kwh']
+                    st.warning("Functionality for this option hasn't been implemented yet")
 
+                #convert series to df
+                plot_df = pd.DataFrame(plot_ser)
                 # Create line chart with Plotly
-                fig = px.line(plot_df, x='settlement_datetime', y='reading', title=f'{nmi_in} - {read_in}')
+                fig = px.line(plot_df, x=plot_df.index, y= plot_df.columns[0], title=f'{nmi_in} - {read_in}')
 
                 #render fig
                 st.plotly_chart(fig, use_container_width=True)
 
                 # add download button for df
-                csv = convert_df(plot_df)
+                csv = convert_df(plot_ser)
 
                 #setup columns
                 col1, col2, col3 = st.columns(3)
