@@ -30,93 +30,10 @@ def setup_SQL_con(username: str, password: str) -> SQLConnector:
     return sql_con
 
 
-def get_nmi_msats_data(nmi: str) -> pd.DataFrame:
-
-    #setup query
-    table_name="aemo_msats_cats_nmi_data"
-    query=(f"SELECT * FROM {table_name} "
-           f"WHERE nmi='{nmi}' "
-           f"ORDER BY from_date desc")
-    
-    #get msats nmi data
-    nmi_msats_df=sql_con.query_sql(query=query,database='standingdata')
-
-    #return the top row as it is the most up to date
-    return nmi_msats_df.iloc[0]
-    
-def get_nmi_tariff(nmi: str):
-
-    #setup query
-    table_name="aemo_msats_cats_register_identifier"
-    query = (f"SELECT * FROM {table_name} "
-             f"WHERE nmi='{nmi}' "
-             f"ORDER BY from_date desc")
-    
-    #get nmi register id data
-    nmi_register_df=sql_con.query_sql(query=query,database='standingdata')
-
-    #return the top row as it is the most up to date
-    return nmi_register_df.iloc[0]
-
-def get_nmi_customer(nmi: str):
-
-    #setup query
-    table_name="mtae_ops_billing_nmi_standing_data_prod"
-    query = (f"SELECT * FROM {table_name} "
-             f"WHERE nmi='{nmi}' "
-             f"ORDER BY creation_date desc")
-
-    #get customer data
-    nmi_customer_df=sql_con.query_sql(query=query,database='standingdata')
-
-    #return the top row as it is the most up to date
-    return nmi_customer_df.iloc[0]
-
-def get_nmi_participants(nmi: str):
-
-    #setup query
-    table_name="aemo_msats_cats_nmi_participant_relations"
-    query = (f"SELECT * FROM {table_name} "
-             f"WHERE nmi='{nmi}'")
-    
-    #get participants data
-    nmi_participants_df=sql_con.query_sql(query=query,database='standingdata')
-
-    return nmi_participants_df
-
 def img_to_bytes(img_path):
     img_bytes = Path(img_path).read_bytes()
     encoded = base64.b64encode(img_bytes).decode()
     return encoded
-
-def get_nmi_list():
-
-    #get current date
-    current_day = date.today().strftime("%Y-%m-%d")
-
-    #setup query
-    table_name="mtae_ops_billing_nmi_standing_data_prod"
-    query = (f"SELECT * FROM {table_name}")
-
-    #get customer data
-    customer_df=sql_con.query_sql(query=query,database='standingdata')
-    customer_nmis =  customer_df['nmi'].unique().tolist()
-
-    #get data with nmi frmp data
-    table_name= "mtae_ops_nmi_frmp_dates"
-    active_nmis_query=(f"SELECT * FROM {table_name} "
-                    f"WHERE frmp_end_date >= '{current_day}'")
-
-    #get all nmis that have a frmp_end_date after the end_date of our query
-    active_nmis_df = sql_con.query_sql(query=active_nmis_query,database='standingdata')
-
-    #get list of active nmi's
-    active_nmi_list=active_nmis_df['nmi'].unique().tolist()
-
-    #determine the intersection between customer nmi list and active nmi list
-    nmi_list = list(set(customer_nmis) & set(active_nmi_list))
-
-    return nmi_list
 
 
 def read_login_pem(file_path:str):
@@ -143,6 +60,10 @@ def read_login_pem(file_path:str):
 
     #return lists
     return names_list,username_list, password_list
+
+'''
+GET FUNCTIONS TO SQL DB
+'''
 
 def get_cost_stat(lookback_op: str):
 
@@ -277,6 +198,147 @@ def get_carbon_stat(lookback_op: str):
     total_carbon_str = "{:,.2f}".format(total_carbon_flt)
 
     return total_carbon_str
+
+def get_nmi_list():
+
+    #get current date
+    current_day = date.today().strftime("%Y-%m-%d")
+
+    #setup query
+    table_name="mtae_ops_billing_nmi_standing_data_prod"
+    query = (f"SELECT * FROM {table_name}")
+
+    #get customer data
+    customer_df=sql_con.query_sql(query=query,database='standingdata')
+    customer_nmis =  customer_df['nmi'].unique().tolist()
+
+    #get data with nmi frmp data
+    table_name= "mtae_ops_nmi_frmp_dates"
+    active_nmis_query=(f"SELECT * FROM {table_name} "
+                    f"WHERE frmp_end_date >= '{current_day}'")
+
+    #get all nmis that have a frmp_end_date after the end_date of our query
+    active_nmis_df = sql_con.query_sql(query=active_nmis_query,database='standingdata')
+
+    #get list of active nmi's
+    active_nmi_list=active_nmis_df['nmi'].unique().tolist()
+
+    #determine the intersection between customer nmi list and active nmi list
+    nmi_list = list(set(customer_nmis) & set(active_nmi_list))
+
+    return nmi_list
+
+def get_nmi_msats_data(nmi: str) -> pd.DataFrame:
+
+    #setup query
+    table_name="aemo_msats_cats_nmi_data"
+    query=(f"SELECT * FROM {table_name} "
+           f"WHERE nmi='{nmi}' "
+           f"ORDER BY from_date desc")
+    
+    #get msats nmi data
+    nmi_msats_df=sql_con.query_sql(query=query,database='standingdata')
+
+    #return the top row as it is the most up to date
+    return nmi_msats_df.iloc[0]
+    
+def get_nmi_tariff(nmi: str):
+
+    #setup query
+    table_name="aemo_msats_cats_register_identifier"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE nmi='{nmi}' "
+             f"ORDER BY from_date desc")
+    
+    #get nmi register id data
+    nmi_register_df=sql_con.query_sql(query=query,database='standingdata')
+
+    #return the top row as it is the most up to date
+    return nmi_register_df.iloc[0]
+
+def get_nmi_customer(nmi: str):
+
+    #setup query
+    table_name="mtae_ops_billing_nmi_standing_data_prod"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE nmi='{nmi}' "
+             f"ORDER BY creation_date desc")
+
+    #get customer data
+    nmi_customer_df=sql_con.query_sql(query=query,database='standingdata')
+
+    #return the top row as it is the most up to date
+    return nmi_customer_df.iloc[0]
+
+def get_nmi_participants(nmi: str):
+
+    #setup query
+    table_name="aemo_msats_cats_nmi_participant_relations"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE nmi='{nmi}'")
+    
+    #get participants data
+    nmi_participants_df=sql_con.query_sql(query=query,database='standingdata')
+
+    return nmi_participants_df
+
+
+## SITE ALIAS FUNCTIONS
+
+def get_customer_sites(billied_entity_alias: str):
+    """Get the ordered list of sites for a seleted customer
+
+    Args:
+        billied_entity_alias (str): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    #setup query
+    table_name="site"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE billed_entity_alias='{billied_entity_alias}' "
+             f"ORDER BY site_live_date desc")
+    
+
+    # get df of sites from specific customer
+    customer_bill_df = sql_con.query_sql(query=query,database='billing')
+
+    #return list of site alias
+    return sorted(customer_bill_df['site_alias'].unique().tolist())
+
+def get_site_nmis(site_alias: str):
+
+    #setup query
+    table_name="site"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE site_alias='{site_alias}' "
+             f"ORDER BY site_live_date desc")
+    
+    # get df of nmis from specific site
+    site_bill_df = sql_con.query_sql(query=query,database='billing')
+
+    #retuen list of nmis
+    return sorted(site_bill_df['site_nmi'].unique().tolist())
+
+
+def get_site_id(nmi: str)->str:
+    #setup query
+    table_name="site"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE site_nmi='{nmi}' "
+             f"ORDER BY site_live_date desc")
+    
+    # get row containing the desired site id
+    site_id_df = sql_con.query_sql(query=query,database='billing') 
+
+    #get value of site_id
+    site_id = site_id_df['site_id'].iloc[0]
+
+    return site_id
+    
+
 
 @st.cache_data
 def convert_df(df):
