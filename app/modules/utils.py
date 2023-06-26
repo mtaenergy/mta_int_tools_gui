@@ -178,7 +178,13 @@ def get_cost_stat(lookback_op: str):
     #retrieve value from sql
     total_cost = sql_con.query_sql(query=query,database='timeseries')
 
-    return total_cost.iloc[0].round(2)
+    #convert to float 
+    total_cost_flt= float(total_cost.iloc[0].round(2))
+
+    #convert to str and format to use commas for thousands separator
+    total_cost_str = "{:,.2f}".format(total_cost_flt)
+
+    return total_cost_str
 
 def get_consump_stat(lookback_op: str):
 
@@ -218,7 +224,13 @@ def get_consump_stat(lookback_op: str):
     #retrieve value from sql
     total_consump = sql_con.query_sql(query=query,database='timeseries')
 
-    return total_consump.iloc[0].round(2)
+    #convert to float 
+    total_consump_flt= float(total_consump.iloc[0].round(2))
+
+    #convert to str and format to use commas for thousands separator
+    total_consump_str = "{:,.2f}".format(total_consump_flt)
+
+    return total_consump_str
 
 def get_carbon_stat(lookback_op: str):
 
@@ -256,9 +268,15 @@ def get_carbon_stat(lookback_op: str):
     #logging.info(query)
 
     #retrieve value from sql
-    total_cost = sql_con.query_sql(query=query,database='timeseries')
+    total_carbon = sql_con.query_sql(query=query,database='timeseries')
 
-    return total_cost.iloc[0].round(2)
+    #convert to float 
+    total_carbon_flt= float(total_carbon.iloc[0].round(2))
+
+    #convert to str and format to use commas for thousands separator
+    total_carbon_str = "{:,.2f}".format(total_carbon_flt)
+
+    return total_carbon_str
 
 @st.cache_data
 def convert_df(df):
