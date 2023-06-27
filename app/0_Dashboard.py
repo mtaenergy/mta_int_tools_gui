@@ -121,45 +121,18 @@ def home_page():
                 customer_sel= st.selectbox(" ", client_list)
 
 
-        #container with pi charts
+        #container with overview charts
         with st.container():
 
-            col1, col2 = st.columns(2)
+            #cost by customer
+            columns='[total_cost_ex_gst]'
+            billing_df=get_billing_records_prod_df(columns=columns, lookback_op=elected_period)
 
-            with col1:
+            fig = go.Figure(data=go.pie(x=billing_df.index, y=billing_df['total_cost_ex_gst']))
 
-                if customer_sel !='Select a customer':
+            st.plotly_chart(fig, use_container_width=True)
 
-                    #pi chart for site consumption
-
-                    labels = ['Category 1', 'Category 2', 'Category 3']
-                    values = [30, 40, 30]
-
-                    # Create the pie chart using Plotly
-                    fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
-
-                    # Set the chart layout
-                    fig.update_layout(title='Consumption kWh Distribution')
-
-                    # Display the pie chart in Streamlit
-                    st.plotly_chart(fig)
 
             
-            with col2:
-
-                if customer_sel !='Select a customer':
-
-                    #pi chart for site carbon
-                    labels = ['Category 4', 'Category 5', 'Category 6']
-                    values = [30, 40, 30]
-
-                    # Create the pie chart using Plotly
-                    fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
-
-                    # Set the chart layout
-                    fig.update_layout(title='Carbon kg Distribution')
-
-                    # Display the pie chart in Streamlit
-                    st.plotly_chart(fig)
 
 home_page()

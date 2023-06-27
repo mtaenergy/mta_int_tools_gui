@@ -199,6 +199,45 @@ def get_carbon_stat(lookback_op: str):
 
     return total_carbon_str
 
+def get_billing_records_prod_df(columns: str, lookback_op: str):
+
+    #setup start of query
+    query = (f"SELECT [bill_run_end_date],[master_customer],{columns} FROM mtae_ops_billing_billing_records_prod ")
+
+    #casewhere where depending on the lookback option chosen, the query will be different
+    if lookback_op =="Last Month":
+        query  = query+ ("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last 3 Months":
+        query  = query + ("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last 6 Months":
+        query  = query + ("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
+                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last Year":
+        query  = query + ("WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
+                    "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
+
+    else:
+        st.error("Invalid date range chosen")
+
+    #logging.info(query)
+
+
+    #retrieve df from sql
+    billing_df = sql_con.query_sql(query=query,database='timeseries')
+
+    #drop date columns
+    billing_df.drop('bill_run_end_date',axis=1, inplace=True)
+
+    #group by master customer
+    billing_df = billing_df.groupby('master_customer').sum()
+
+    return billing_df
+
 def get_nmi_list():
 
     #get current date
