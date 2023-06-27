@@ -89,6 +89,19 @@ def home_page():
 
             logging.info(elected_period)
 
+            # collect billing df based on elected period
+            columns='[nmi],[total_cost_ex_gst],[charge_group],[charge_name],[volume],[scaling_factor],[loss_factor]'
+            billing_df=get_billing_records_prod_df(columns=columns, lookback_op=elected_period)
+
+        #container to select  customer
+        with st.container():
+
+            col1, col2, col3 = st.columns(3)
+
+            with col3:
+                #customer select
+                customer_sel= st.selectbox(" ", client_list)
+
         #container for high level statistics
         with st.container():
 
@@ -101,41 +114,57 @@ def home_page():
                 st.metric('Number of serviced sites',num_sites)
 
             with col2:
+
+                #group by master customer to get cost per customer
+                cost_df = billing_df.groupby('master_customer').sum()
+
                 #total costs
-                st.metric("Total Cost $AUD",get_cost_stat(elected_period))
+                total_cost = cost_df['total_cost_ex_gst'].sum()
+
+                #format float as string
+                total_cost_str = "{:,.2f}".format(total_cost)
+
+                st.metric("Total Cost $AUD",total_cost_str)
 
             with col3:
-                #total costs
-                st.metric("Total Eletricity Consumption kWh",get_consump_stat(elected_period))
+                #filter for only rows with Commodity as charge group
+                consump_df = billing_df.loc[billing_df['charge_group']=='Commodity']
+                consump_df = consump_df.groupby('master_customer').sum()
+
+                #total consump
+                total_consump = consump_df['volume'].sum()
+
+                #format float as string
+                total_consump_str = "{:,.2f}".format(total_consump)
+
+                st.metric("Total Eletricity Consumption kWh",total_consump_str)
 
             with col4:
-                #total costs
-                st.metric("Total Carbon Emissions kg",get_carbon_stat(elected_period))
 
-        #container to select pi chart customer
-        with st.container():
+                #filter for only rows with Carbon as charge name
+                carbon_df = billing_df.loc[billing_df['charge_name']=='Carbon']
 
-            col1, col2, col3 = st.columns(3)
+                #create new column which is the multiplication of volume, loss factor and scaling factor
+                carbon_df['carbon_ton'] = carbon_df['volume']*carbon_df['scaling_factor']*carbon_df['loss_factor']/1000
+                carbon_df = carbon_df.groupby('master_customer').sum()
 
-            with col2:
-                #customer select
-                customer_sel= st.selectbox(" ", client_list)
+                #total carbon
+                total_carbon = carbon_df['carbon_ton'].sum()
+
+                #format float as string
+                total_carbon_str = "{:,.2f}".format(total_carbon)
+
+                #total carbon
+                st.metric("Total Carbon Emissions ton",total_carbon_str)
 
 
         #container with overview charts
         with st.container():
 
-            #cost by customer
-            columns='[nmi],[total_cost_ex_gst],[charge_group],[charge_name],[volume],[scaling_factor],[loss_factor]'
-            billing_df=get_billing_records_prod_df(columns=columns, lookback_op=elected_period)
-
             #make columns
             col1, col2, col3 = st.columns(3)
 
             with col1:
-
-                #group by master customer to get cost per customer
-                cost_df = billing_df.groupby('master_customer').sum()
 
                 fig = px.pie(cost_df, names=cost_df.index, values='total_cost_ex_gst', 
                              title = 'Total Cost ex GST by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
@@ -144,23 +173,12 @@ def home_page():
 
             with col2:
 
-                #filter for only rows with Commodity as charge group
-                consump_df = billing_df.loc[billing_df['charge_group']=='Commodity']
-                consump_df = consump_df.groupby('master_customer').sum()
-
                 fig = px.pie(cost_df, names=consump_df.index, values='volume', 
                              title = 'Total Consumption kWh by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
 
                 st.plotly_chart(fig, use_container_width=True)
 
             with col3:
-
-                #filter for only rows with Carbon as charge name
-                carbon_df = billing_df.loc[billing_df['charge_name']=='Carbon']
-
-                #create new column which is the multiplication of volume, loss factor and scaling factor
-                carbon_df['carbon_ton'] = carbon_df['volume']*carbon_df['scaling_factor']*carbon_df['loss_factor']/1000
-                carbon_df = carbon_df.groupby('master_customer').sum()
 
                 fig = px.pie(carbon_df, names=carbon_df.index, values='carbon_ton', 
                              title = 'Total Carbon tons by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
