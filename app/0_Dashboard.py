@@ -5,6 +5,7 @@ from PIL import Image
 import pickle
 from pathlib import Path
 import plotly.graph_objects as go
+import plotly.express as px
 
 from modules.utils import *
 
@@ -125,12 +126,51 @@ def home_page():
         with st.container():
 
             #cost by customer
-            columns='[total_cost_ex_gst]'
+            columns='[nmi],[total_cost_ex_gst],[charge_group],[charge_name],[volume],[scaling_factor],[loss_factor]'
             billing_df=get_billing_records_prod_df(columns=columns, lookback_op=elected_period)
 
-            fig = go.Figure(data=go.pie(x=billing_df.index, y=billing_df['total_cost_ex_gst']))
+            #make columns
+            col1, col2, col3 = st.columns(3)
 
-            st.plotly_chart(fig, use_container_width=True)
+            with col1:
+
+                #group by master customer to get cost per customer
+                cost_df = billing_df.groupby('master_customer').sum()
+
+                fig = px.pie(cost_df, names=cost_df.index, values='total_cost_ex_gst', 
+                             title = 'Total Cost ex GST by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
+
+                st.plotly_chart(fig, use_container_width=True)
+
+            with col2:
+
+                #filter for only rows with Commodity as charge group
+                consump_df = billing_df.loc[billing_df['charge_group']=='Commodity']
+                consump_df = consump_df.groupby('master_customer').sum()
+
+                fig = px.pie(cost_df, names=consump_df.index, values='volume', 
+                             title = 'Total Consumption kWh by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
+
+                st.plotly_chart(fig, use_container_width=True)
+
+            with col3:
+
+                #filter for only rows with Carbon as charge name
+                carbon_df = billing_df.loc[billing_df['charge_name']=='Carbon']
+
+                #create new column which is the multiplication of volume, loss factor and scaling factor
+                carbon_df['carbon_ton'] = carbon_df['volume']*carbon_df['scaling_factor']*carbon_df['loss_factor']/1000
+                carbon_df = carbon_df.groupby('master_customer').sum()
+
+                fig = px.pie(carbon_df, names=carbon_df.index, values='carbon_ton', 
+                             title = 'Total Carbon tons by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
+                
+                #GnBu_r
+
+                st.plotly_chart(fig, use_container_width=True)
+
+
+            
 
 
             

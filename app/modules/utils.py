@@ -231,10 +231,7 @@ def get_billing_records_prod_df(columns: str, lookback_op: str):
     billing_df = sql_con.query_sql(query=query,database='timeseries')
 
     #drop date columns
-    billing_df.drop('bill_run_end_date',axis=1, inplace=True)
-
-    #group by master customer
-    billing_df = billing_df.groupby('master_customer').sum()
+    billing_df.drop(['bill_run_end_date','nmi'],axis=1, inplace=True)
 
     return billing_df
 
