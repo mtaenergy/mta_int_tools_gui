@@ -100,12 +100,14 @@ def home_page():
 
             with col3:
                 #customer select
-                customer_sel= st.selectbox(" ", client_list)
+                #customer_sel= st.selectbox(" ", client_list)
+                pass
 
         #container for high level statistics
         with st.container():
 
             col1, col2, col3, col4 = st.columns(4)
+
 
             with col1:
                 #number of serviced sites
@@ -187,10 +189,29 @@ def home_page():
 
                 st.plotly_chart(fig, use_container_width=True)
 
+        #container with vwap per customer
+        with st.container():
 
+            billing_commodity = billing_df[billing_df['charge_group'] == 'Commodity']
+
+            vwap_df = pd.DataFrame({
+                'commod_$': billing_commodity.groupby('master_customer')['total_cost_ex_gst'].sum(),
+                'commod_kwh': billing_commodity.groupby('master_customer')['volume'].sum()
+            }).reset_index()
+
+            vwap_df['vwap_commod'] = vwap_df['commod_$'] / vwap_df['commod_kwh'] * 100
+
+            fig = px.bar(vwap_df, x=vwap_df['master_customer'], y='vwap_commod', 
+                             title = 'VWAP Commodity by Customer',
+                             labels={
+                                 'master_customer': 'Customer',
+                                 'vwap_commod': 'Commodity VWAP c/kWh'
+                             })
             
-
-
+            fig.update_traces(marker_color='#35ABDE')
             
+            st.plotly_chart(fig, use_container_width=True)
+
+
 
 home_page()
