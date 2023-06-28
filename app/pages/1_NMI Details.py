@@ -10,7 +10,7 @@ import mtatk
 from modules.utils import *
 
 #global variables
-reading_type =['Select a reading type','Export kWh', 'Import kWh', 'Demand kW', 'Demand kVA', 'Cost ex GST', 'Carbon kg']
+reading_type =['Select a reading type','Export kWh', 'Import kWh', 'Demand kW', 'Demand kVA','Demand Power Factor', 'Cost ex GST', 'Carbon kg']
 global_nmi_list =['Select a NMI']
 global_nmi_list=global_nmi_list+get_nmi_list() #add all nmi's in database to list
 
@@ -196,14 +196,23 @@ def nmi_page():
                     elif read_in =='Demand kVA':
                         plot_ser = nmi.meter_data.demand_kva
 
+                    elif read_in == 'Demand Power Factor':
+                        plot_ser = nmi.meter_data.demand_kw/nmi.meter_data.demand_kva
+                        
+
                     else:
                         #plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='export_kwh']
                         st.warning("Functionality for this option hasn't been implemented yet")
 
                     #convert series to df
                     plot_df = pd.DataFrame(plot_ser)
+                    
                     # Create line chart with Plotly
-                    fig = px.line(plot_df, x=plot_df.index, y= plot_df.columns[0], title=f'{nmi_in} - {read_in}')
+                    fig = px.line(plot_df, x=plot_df.index, y= plot_df.columns[0], title=f'{nmi_in} - {read_in}',
+                                  labels={
+                                     plot_df.index:'Date',
+                                     plot_df.columns[0]: read_in 
+                                  })
 
                     #render fig
                     st.plotly_chart(fig, use_container_width=True)
