@@ -18,12 +18,58 @@ from modules.utils import *
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
 
-update_options=['Select option to update', 'Update GL Codes']
+update_options=['Select option to update', 'Update NMI Details']
+global_nmi_list =['Select a NMI']
+global_nmi_list=global_nmi_list+get_nmi_list()
 
 # Page : Update Data
 
-def update_gl_codes():
-    pass
+def update_nmi_sd():
+    
+    with st.container():
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            #select a nmi
+            nmi_in = st.selectbox("Select a NMI", global_nmi_list)
+
+    #display the current details for that nmi
+    with st.container():
+
+        if nmi_in != 'Select a NMI':
+
+            st.subheader("Current NMI Details")
+
+            nmi_site_details = get_nmi_customer(nmi=nmi_in)
+
+            #set series as df
+            nmi_details_df = pd.DataFrame(nmi_site_details)
+
+            #tranpose the df
+            nmi_details_df = nmi_details_df.transpose()
+
+            #display the editable dataframe
+            edited_df = st.data_editor(nmi_details_df,use_container_width=True,column_config ={'nmi': None})
+
+            logging.info(edited_df)
+
+            #add a button to submit new dataframe
+            col1, col2, col3 = st.columns(3)
+
+            with col2:
+                if st.button("Update", use_container_width=True):
+                    update_cols = edited_df.columns
+                    match_cols =['nmi']
+                    table_name = 'mtae_ops_billing_nmi_standing_data_prod'
+
+                    sql_con.update_to_database(update_cols, match_cols,df=edited_df, database='standingdata', table_name=table_name)
+
+
+
+
+
+
 
 def update_page():
 
@@ -52,8 +98,8 @@ def update_page():
 
         #container to contain update specific form for chosen option
         with st.container():
-            if update_in == 'Update GL Codes':
-                update_gl_codes()
+            if update_in == 'Update NMI Details':
+                update_nmi_sd()
 
 
 

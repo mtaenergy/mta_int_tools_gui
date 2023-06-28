@@ -358,7 +358,6 @@ def get_site_nmis(site_alias: str):
     #retuen list of nmis
     return sorted(site_bill_df['site_nmi'].unique().tolist())
 
-
 def get_site_id(nmi: str)->str:
     #setup query
     table_name="site"
@@ -374,6 +373,11 @@ def get_site_id(nmi: str)->str:
 
     return site_id
     
+
+## PUSH FUNCTIONS
+
+    
+
 
 
 @st.cache_data
