@@ -198,11 +198,16 @@ def nmi_page():
 
                     elif read_in == 'Demand Power Factor':
                         plot_ser = nmi.meter_data.demand_kw/nmi.meter_data.demand_kva
+
+                        #update series name
+                        plot_ser.name = 'Demand Power Factor'
+                        
                         
 
                     else:
                         #plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='export_kwh']
                         st.warning("Functionality for this option hasn't been implemented yet")
+                        plot_ser = pd.Series()
 
                     #convert series to df
                     plot_df = pd.DataFrame(plot_ser)
@@ -210,9 +215,12 @@ def nmi_page():
                     # Create line chart with Plotly
                     fig = px.line(plot_df, x=plot_df.index, y= plot_df.columns[0], title=f'{nmi_in} - {read_in}',
                                   labels={
-                                     plot_df.index:'Date',
+                                     plot_df.index.name:'Date',
                                      plot_df.columns[0]: read_in 
                                   })
+                    
+                    if read_in == 'Demand Power Factor':
+                        fig.update_yaxes(range=[0, 1])
 
                     #render fig
                     st.plotly_chart(fig, use_container_width=True)
