@@ -262,9 +262,15 @@ def nmi_page():
 
 
             with st.container():
+                    
+                    #create df with all metrics
+                    download_df = pd.concat([nmi.meter_data.consumption_kwh,nmi.meter_data.generation_kwh,nmi.meter_data.demand_kw,nmi.meter_data.demand_kva,nmi.meter_data.demand_kw/nmi.meter_data.demand_kva],axis=1)
+
+                    #update last column name
+                    download_df.rename(columns={download_df.columns[-1]: 'demand_pf'}, inplace=True)
 
                     # add download button for df
-                    csv = convert_df(plot_ser)
+                    csv = convert_df(download_df)
 
 
                     #setup columns
