@@ -14,7 +14,7 @@ from geopy.geocoders import Nominatim
 
 current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
-logging.info(cert)
+
 
 st.set_page_config(
     page_title="MTA Energy Executive Dashboard",

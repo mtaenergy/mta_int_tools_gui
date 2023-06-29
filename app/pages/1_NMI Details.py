@@ -108,7 +108,7 @@ def nmi_page():
                     site_alias = nmi_site_details['site_alias']
                     site_address = nmi_site_details['site_address']
 
-                    logging.info(site_customer)
+                    #logging.info(site_customer)
 
 
                     if site_customer != 'Best and Less Pty Ltd':
@@ -144,7 +144,7 @@ def nmi_page():
                         nmi_reg_details = nmi.standing_data.registers
                         nmi_party_details = nmi.standing_data.roles
 
-                        logging.info(nmi_details)
+                        #logging.info(nmi_details)
  
 
                         #try and except as not all sites may have codes
@@ -187,8 +187,8 @@ def nmi_page():
                     with col2:
                         #create details table
                         details_data ={
-                            'Detail': ['Master Customer','Site Alias', 'Site Size', 'Jurisdiction Code','Customer Classification Code', 'Customer Threshold Code','Network Tariff Code'],
-                            'Value': [site_customer, site_alias, site_size, jurisdiction_code,customer_class_code,customer_thresh_code,network_tariff_code]
+                            'Detail': ['Master Customer','Site Alias', 'Site Address','Site Size', 'Jurisdiction Code','Customer Classification Code', 'Customer Threshold Code','Network Tariff Code'],
+                            'Value': [site_customer, site_alias,site_address, site_size, jurisdiction_code,customer_class_code,customer_thresh_code,network_tariff_code]
                         }
 
                         details_df = pd.DataFrame(details_data)
@@ -230,7 +230,7 @@ def nmi_page():
 
 
                     else:
-                        
+
                         meter_data_df= api_con.get_interval_meter_data(nmi=nmi_in,start_date=start_dt_in, end_date=end_dt_in, grouped_by_nmi=True, drop_estimates=False)
         
                         if read_in =='Export kWh':
