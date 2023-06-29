@@ -13,11 +13,7 @@ from modules.utils import *
 img_path = "app/imgs/400dpiLogo.jpg"
 
 
-st.set_page_config(
-    page_title="MTA Energy Executive Dashboard",
-    page_icon=":bar_chart:",
-    layout="wide"
-)
+
 
 if 'sub_key' not in session_state:
     session_state['sub_key'] = False
@@ -85,7 +81,7 @@ def home_page():
 
         #container for lookback selector
         with st.container():
-            elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year"))
+            elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year", "Last FY", "FY to date"))
 
             logging.info(elected_period)
 
@@ -111,7 +107,7 @@ def home_page():
 
             with col1:
                 #number of serviced sites
-                num_sites = len(get_nmi_list())
+                num_sites = len(billing_df['nmi'].unique().tolist())
 
                 st.metric('Number of serviced sites',num_sites)
 
