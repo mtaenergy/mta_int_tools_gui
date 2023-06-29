@@ -81,7 +81,7 @@ def home_page():
 
         #container for lookback selector
         with st.container():
-            elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year", "Last FY"))
+            elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year", "Last FY", "FY to date"))
 
             logging.info(elected_period)
 

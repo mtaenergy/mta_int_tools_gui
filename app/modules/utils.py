@@ -241,9 +241,13 @@ def get_billing_records_prod_df(columns: str, lookback_op: str):
         query  = query + ("WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
                     "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
         
+    elif lookback_op == "FY to date":
+        query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) "
+                        " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE()) , 7, 1)")
+        
     elif lookback_op == "Last FY":
-        query =query + ("WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
-                    "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
+        query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-2, 7, 1) "
+                        " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE())-1 , 7, 1)")
 
     else:
         st.error("Invalid date range chosen")
