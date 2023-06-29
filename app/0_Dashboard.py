@@ -107,7 +107,7 @@ def home_page():
 
             with col1:
                 #number of serviced sites
-                num_sites = len(get_nmi_list())
+                num_sites = len(billing_df['nmi'].unique().tolist())
 
                 st.metric('Number of serviced sites',num_sites)
 
