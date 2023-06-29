@@ -1,11 +1,10 @@
 altair
 click
 streamlit
-streamlit_authenticator
+streamlit-authenticator
 pandas
 protobuf
-vega_datasets
 geopy
 folium
 plotly
-git+https://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:x-oauth-basic@github.com/mtaenergy/mtatk.git@main
+git+https://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:x-oauth-basic@github.com/mtaenergy/mtatk.git@main
