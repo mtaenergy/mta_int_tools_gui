@@ -14,7 +14,10 @@ reading_type =['Select a reading type','Export kWh', 'Import kWh', 'Demand kW', 
 global_nmi_list =['Select a NMI']
 global_nmi_list=global_nmi_list+get_nmi_list() #add all nmi's in database to list
 
-customer_list=['Select a customer','Best and Less Pty Ltd']
+customer_list=['Select a customer']
+customer_list = customer_list+get_customer_list()
+
+
 site_list = ['Select a site']
 
 #image path

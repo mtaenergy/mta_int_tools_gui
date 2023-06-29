@@ -256,6 +256,21 @@ def get_billing_records_prod_df(columns: str, lookback_op: str):
     return billing_df
 
 @st.cache_data
+def get_customer_list():
+
+    #setup query
+    table_name="mtae_ops_billing_nmi_standing_data_prod"
+    query = (f"SELECT * FROM {table_name}")
+
+    #get customer data
+    customer_df=sql_con.query_sql(query=query,database='standingdata')
+
+    #setup list
+    customer_list = customer_df['master_customer'].unique().tolist()
+
+    return customer_list
+
+@st.cache_data
 def get_nmi_list():
 
     #get current date
@@ -357,33 +372,79 @@ def get_customer_sites(billied_entity_alias: str):
         _type_: _description_
     """
 
-    #setup query
-    table_name="site"
-    query = (f"SELECT * FROM {table_name} "
-             f"WHERE billed_entity_alias='{billied_entity_alias}' "
-             f"ORDER BY site_live_date desc")
+    # #setup query
+    # table_name="site"
+    # query = (f"SELECT * FROM {table_name} "
+    #          f"WHERE billed_entity_alias='{billied_entity_alias}' "
+    #          f"ORDER BY site_live_date desc")
     
 
-    # get df of sites from specific customer
-    customer_bill_df = sql_con.query_sql(query=query,database='billing')
+    # # get df of sites from specific customer
+    # customer_bill_df = sql_con.query_sql(query=query,database='billing')
+
+
+    #setup query
+    table_name="mtae_ops_billing_nmi_standing_data_prod"
+    query = (f"SELECT [site_alias] FROM {table_name} "
+             f"WHERE master_customer = '{billied_entity_alias}' "
+             "ORDER BY creation_date")
+
+    #get sites series
+    sites=sql_con.query_sql(query=query,database='standingdata')
+
+    #drop duplicates
+    sites.drop_duplicates(inplace=True,keep='last')
+
+    #sort and create as list
+    sites_list = sorted(sites['site_alias'].unique().tolist())
 
     #return list of site alias
-    return sorted(customer_bill_df['site_alias'].unique().tolist())
+    return sites_list
 
 @st.cache_data
 def get_site_nmis(site_alias: str):
 
-    #setup query
-    table_name="site"
-    query = (f"SELECT * FROM {table_name} "
-             f"WHERE site_alias='{site_alias}' "
-             f"ORDER BY site_live_date desc")
+    # #setup query
+    # table_name="site"
+    # query = (f"SELECT * FROM {table_name} "
+    #          f"WHERE site_alias='{site_alias}' "
+    #          f"ORDER BY site_live_date desc")
     
-    # get df of nmis from specific site
-    site_bill_df = sql_con.query_sql(query=query,database='billing')
+    # # get df of nmis from specific site
+    # site_bill_df = sql_con.query_sql(query=query,database='billing')
 
-    #retuen list of nmis
-    return sorted(site_bill_df['site_nmi'].unique().tolist())
+
+    #get current date
+    current_day = date.today().strftime("%Y-%m-%d")
+
+    #setup query
+    table_name="mtae_ops_billing_nmi_standing_data_prod"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE site_alias='{site_alias}'")
+
+    #get customer data
+    customer_df=sql_con.query_sql(query=query,database='standingdata')
+    customer_nmis =  customer_df['nmi'].unique().tolist()
+
+    #get data with nmi frmp data
+    table_name= "mtae_ops_nmi_frmp_dates"
+    active_nmis_query=(f"SELECT * FROM {table_name} "
+                    f"WHERE frmp_end_date >= '{current_day}'")
+
+    #get all nmis that have a frmp_end_date after the end_date of our query
+    active_nmis_df = sql_con.query_sql(query=active_nmis_query,database='standingdata')
+
+    #get list of active nmi's
+    active_nmi_list=active_nmis_df['nmi'].unique().tolist()
+
+    #determine the intersection between customer nmi list and active nmi list
+    nmi_list = list(set(customer_nmis) & set(active_nmi_list))
+
+    return nmi_list
+
+
+    # #retuen list of nmis
+    # return sorted(site_bill_df['site_nmi'].unique().tolist())
 
 @st.cache_data
 def get_site_id(nmi: str)->str:
