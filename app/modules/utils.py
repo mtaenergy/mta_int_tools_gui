@@ -240,6 +240,10 @@ def get_billing_records_prod_df(columns: str, lookback_op: str):
     elif lookback_op == "Last Year":
         query  = query + ("WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
                     "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
+        
+    elif lookback_op == "Last FY":
+        query =query + ("WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
+                    "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
 
     else:
         st.error("Invalid date range chosen")

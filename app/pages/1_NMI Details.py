@@ -276,30 +276,30 @@ def nmi_page():
                 with col1:
                     #display total consumption
                     if read_in =='Export kWh':
-                        st.metric('Total consumption kWh',plot_ser.sum())
+                        st.metric('Total consumption kWh',round(plot_ser.sum(),2))
 
                 with col2:
                     #display peak consumption
                     if read_in =='Export kWh':
-                        st.metric('Peak consumption kWh',plot_ser.max())
+                        st.metric('Peak consumption kWh',round(plot_ser.max(),2))
 
                     #display peak kw
                     elif read_in =='Demand kW':
-                        st.metric('Peak demand kW',plot_ser.max())
+                        st.metric('Peak demand kW',round(plot_ser.max(),2))
 
                     #display peak kva
                     elif read_in =='Demand kVA':
-                        st.metric('Peak demand kVA',plot_ser.max())
+                        st.metric('Peak demand kVA',round(plot_ser.max(),2))
 
                 with col3:
 
                     #display min kw
                     if read_in =='Demand kW':
-                        st.metric('Min demand kW',plot_ser.min())
+                        st.metric('Min demand kW',round(plot_ser.min(),2))
 
                     #display min kva
                     elif read_in =='Demand kVA':
-                        st.metric('Min demand kVA',plot_ser.min())
+                        st.metric('Min demand kVA',round(plot_ser.min(),2))
 
 
 
