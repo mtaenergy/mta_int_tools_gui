@@ -4,17 +4,26 @@ Utilities module to assist the streamlit app
 from mtatk.api_lib.aemo_api_connector import APIConnector
 from mtatk.mta_sql.sql_connector import SQLConnector
 import streamlit as st
+from streamlit import session_state
 import pandas as pd
 from pathlib import Path
 import base64
 from datetime import date
 import logging
+from geopy.geocoders import Nominatim
 
 current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
 logging.info(cert)
 
+st.set_page_config(
+    page_title="MTA Energy Executive Dashboard",
+    page_icon=":bar_chart:",
+    layout="wide"
+)
 
+
+@st.cache_data
 def setup_API_con():
 
     #create API Connector object
@@ -22,6 +31,7 @@ def setup_API_con():
 
     return api_connector
 
+@st.cache_resource
 def setup_SQL_con(username: str, password: str) -> SQLConnector:
 
     #create SQL Connection object
@@ -29,7 +39,13 @@ def setup_SQL_con(username: str, password: str) -> SQLConnector:
 
     return sql_con
 
+@st.cache_data
+def setup_geolocator():
+    geolocator = Nominatim(user_agent="my_app")
 
+    return geolocator
+
+@st.cache_data
 def img_to_bytes(img_path):
     img_bytes = Path(img_path).read_bytes()
     encoded = base64.b64encode(img_bytes).decode()
@@ -65,6 +81,7 @@ def read_login_pem(file_path:str):
 GET FUNCTIONS TO SQL DB
 '''
 
+@st.cache_data
 def get_cost_stat(lookback_op: str):
 
     #casewhere where depending on the lookback option chosen, the query will be different
@@ -107,6 +124,7 @@ def get_cost_stat(lookback_op: str):
 
     return total_cost_str
 
+@st.cache_data
 def get_consump_stat(lookback_op: str):
 
     #casewhere where depending on the lookback option chosen, the query will be different
@@ -153,6 +171,7 @@ def get_consump_stat(lookback_op: str):
 
     return total_consump_str
 
+@st.cache_data
 def get_carbon_stat(lookback_op: str):
 
     #casewhere where depending on the lookback option chosen, the query will be different
@@ -199,6 +218,7 @@ def get_carbon_stat(lookback_op: str):
 
     return total_carbon_str
 
+@st.cache_data
 def get_billing_records_prod_df(columns: str, lookback_op: str):
 
     #setup start of query
@@ -235,6 +255,7 @@ def get_billing_records_prod_df(columns: str, lookback_op: str):
 
     return billing_df
 
+@st.cache_data
 def get_nmi_list():
 
     #get current date
@@ -264,6 +285,7 @@ def get_nmi_list():
 
     return nmi_list
 
+@st.cache_data
 def get_nmi_msats_data(nmi: str) -> pd.DataFrame:
 
     #setup query
@@ -277,7 +299,8 @@ def get_nmi_msats_data(nmi: str) -> pd.DataFrame:
 
     #return the top row as it is the most up to date
     return nmi_msats_df.iloc[0]
-    
+
+@st.cache_data 
 def get_nmi_tariff(nmi: str):
 
     #setup query
@@ -292,6 +315,7 @@ def get_nmi_tariff(nmi: str):
     #return the top row as it is the most up to date
     return nmi_register_df.iloc[0]
 
+@st.cache_data
 def get_nmi_customer(nmi: str):
 
     #setup query
@@ -306,6 +330,7 @@ def get_nmi_customer(nmi: str):
     #return the top row as it is the most up to date
     return nmi_customer_df.iloc[0]
 
+@st.cache_data
 def get_nmi_participants(nmi: str):
 
     #setup query
@@ -321,6 +346,7 @@ def get_nmi_participants(nmi: str):
 
 ## SITE ALIAS FUNCTIONS
 
+@st.cache_data
 def get_customer_sites(billied_entity_alias: str):
     """Get the ordered list of sites for a seleted customer
 
@@ -344,6 +370,7 @@ def get_customer_sites(billied_entity_alias: str):
     #return list of site alias
     return sorted(customer_bill_df['site_alias'].unique().tolist())
 
+@st.cache_data
 def get_site_nmis(site_alias: str):
 
     #setup query
@@ -358,6 +385,7 @@ def get_site_nmis(site_alias: str):
     #retuen list of nmis
     return sorted(site_bill_df['site_nmi'].unique().tolist())
 
+@st.cache_data
 def get_site_id(nmi: str)->str:
     #setup query
     table_name="site"
@@ -376,6 +404,8 @@ def get_site_id(nmi: str)->str:
 
 ## PUSH FUNCTIONS
 
+def clear_flag():
+    session_state.sub_key=False
     
 
 
@@ -385,13 +415,23 @@ def convert_df(df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
     return df.to_csv().encode('utf-8')
 
-api_con = setup_API_con()
+@st.cache_resource
+def startup_site():
 
-#get default username and password from logins.pem
-_,username_list, password_list = read_login_pem(Path(__file__).parent.parent.parent)
 
-#use first line credentials as default login
-username=username_list[0]
-password=password_list[0]
+    api_con = setup_API_con()
 
-sql_con = setup_SQL_con(username=username,password=password)
+    #get default username and password from logins.pem
+    _,username_list, password_list = read_login_pem(Path(__file__).parent.parent.parent)
+
+    #use first line credentials as default login
+    username=username_list[0]
+    password=password_list[0]
+
+    sql_con = setup_SQL_con(username=username,password=password)
+
+    geolocator = setup_geolocator()
+
+    return api_con, sql_con, geolocator
+
+api_con, sql_con, geolocator = startup_site()

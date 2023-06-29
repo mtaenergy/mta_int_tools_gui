@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from geopy.geocoders import Nominatim
+
 import plotly.express as px
 from streamlit import session_state
 from PIL import Image
@@ -52,13 +52,13 @@ def nmi_page():
             with col1:
 
                 
-                customer_in = st.selectbox("Select a customer",customer_list)
+                customer_in = st.selectbox("Select a customer",options=customer_list,on_change=clear_flag())
                 if customer_in != 'Select a customer':
 
                     #generate a site list based on customer selected 
                     site_list = ['Select a site'] +get_customer_sites(customer_in)
 
-                    site_in = st.selectbox("Select a site",site_list)
+                    site_in = st.selectbox("Select a site",site_list,on_change=clear_flag())
 
                 #update nmi list if specific site is chosen
                 if 'site_in' in locals():
@@ -70,12 +70,12 @@ def nmi_page():
                 else:
                     nmi_list=global_nmi_list
 
-                nmi_in = st.selectbox("Select a NMI", nmi_list)
-                read_in = st.selectbox("Select an option", reading_type)
+                nmi_in = st.selectbox("Select a NMI", nmi_list,on_change=clear_flag())
+                read_in = st.selectbox("Select an option", reading_type,on_change=clear_flag())
 
             with col2:
-                start_dt_in = st.date_input("Start Date")
-                end_dt_in = st.date_input("End Date")
+                start_dt_in = st.date_input("Start Date",on_change=clear_flag())
+                end_dt_in = st.date_input("End Date",on_change=clear_flag())
         
         with st.container():
 
@@ -88,7 +88,7 @@ def nmi_page():
 
                     #validate nmi and reading inputs
                     if nmi_in =='Select a NMI' or read_in == 'Select a reading type':
-                        st.write('Invalid submission. Try again')
+                        st.warning('Invalid submission. Try again')
                         session_state.sub_key=False
 
                     else:
@@ -100,47 +100,73 @@ def nmi_page():
 
                     #st.header("Display map and nmi deets")
 
-                    #setup site and nmi class using nmi_in
-                    site_id = get_site_id(nmi=nmi_in)
-                    site = mtatk.mta_class_site.Site(site_id=site_id)
-                    nmi = mtatk.mta_class_nmi.NMI(nmi=site.site_details.nmi, start_date=start_dt_in, end_date=end_dt_in,CERT=cert)
-
-
-                    #get df entry for thechosen nmi
-                    # nmi_details = get_nmi_msats_data(nmi=nmi_in)
-                    # nmi_reg_details = get_nmi_tariff(nmi=nmi_in)
-                    # nmi_site_details = get_nmi_customer(nmi=nmi_in)
-                    # nmi_party_details = get_nmi_participants(nmi=nmi_in)
-
-
-                    nmi_details = nmi.standing_data.master_data
-                    nmi_reg_details = nmi.standing_data.registers
-                    nmi_party_details = nmi.standing_data.roles
-                    nmi_site_details = get_nmi_customer(nmi=nmi_in)
-
-                    #nmi codes
-                    customer_class_code = nmi_details['CustomerClassificationCode']
-                    customer_thresh_code = nmi_details['CustomerThresholdCode']
-                    jurisdiction_code = nmi_details['JurisdictionCode']
-
-                    #TARIFF INFO
-                    #order reg details
-                    nmi_reg_details = nmi_reg_details.sort_values('CreationDate',ascending=False)
-
-                    #get tariff code
-                    network_tariff_code = nmi_reg_details['NetworkTariffCode'].iloc[0]
-
+                    #case where if the nmi isn't a best and less nmi, then use api
                     #site info
+                    nmi_site_details = get_nmi_customer(nmi=nmi_in)
                     site_customer = nmi_site_details['master_customer']
                     site_size = nmi_site_details['site_size']
                     site_alias = nmi_site_details['site_alias']
                     site_address = nmi_site_details['site_address']
 
-                    #only keep required columns from nmi_party_details
-                    nmi_party_details=nmi_party_details[['Party','Role','CreationDate']]
+                    logging.info(site_customer)
 
-                    #rename colummns
-                    #nmi_party_details = nmi_party_details.rename(columns={"party": "Party", 'role': 'Role', 'from_date': 'From Date'})
+
+                    if site_customer != 'Best and Less Pty Ltd':
+                    
+                        #get df entry for the chosen nmi
+                        nmi_details = get_nmi_msats_data(nmi=nmi_in)
+                        nmi_reg_details = get_nmi_tariff(nmi=nmi_in)
+                        nmi_party_details = get_nmi_participants(nmi=nmi_in)
+
+                        customer_class_code = nmi_details['customer_classification_code']
+                        customer_thresh_code = nmi_details['customer_threshold_code']
+                        jurisdiction_code = nmi_details['jurisdiction_code']
+
+                        #nmi_reg_details = nmi_reg_details.sort_values(ascending=False)
+
+                        #get tariff code
+                        network_tariff_code = nmi_reg_details['network_tariff_code']
+
+                        #rename colummns
+                        nmi_party_details=nmi_party_details[['party','role','from_date']]
+                        nmi_party_details = nmi_party_details.rename(columns={"party": "Party", 'role': 'Role', 'from_date': 'From Date'})
+
+
+                    else:
+
+                        #setup site and nmi class using nmi_in
+                        site_id = get_site_id(nmi=nmi_in)
+                        site = mtatk.mta_class_site.Site(site_id=site_id)
+                        nmi = mtatk.mta_class_nmi.NMI(nmi=site.site_details.nmi, start_date=start_dt_in, end_date=end_dt_in,CERT=cert)
+
+
+                        nmi_details = nmi.standing_data.master_data
+                        nmi_reg_details = nmi.standing_data.registers
+                        nmi_party_details = nmi.standing_data.roles
+
+                        logging.info(nmi_details)
+ 
+
+                        #try and except as not all sites may have codes
+                        try:
+                            customer_class_code = nmi_details['CustomerClassificationCode']
+                            customer_thresh_code = nmi_details['CustomerThresholdCode']
+                        except:
+                            customer_class_code = '<N/A>'
+                            customer_thresh_code = '<N/A>'
+                             
+                        jurisdiction_code = nmi_details['JurisdictionCode']
+
+                        #TARIFF INFO
+                        #order reg details
+                        nmi_reg_details = nmi_reg_details.sort_values('CreationDate',ascending=False)
+
+                        #get tariff code
+                        network_tariff_code = nmi_reg_details['NetworkTariffCode'].iloc[0]
+
+                        #only keep required columns from nmi_party_details
+                        nmi_party_details=nmi_party_details[['Party','Role','CreationDate']]
+
 
                     #replace AUS with australia
                     site_address = site_address.replace("AUS","Australia")
@@ -151,7 +177,6 @@ def nmi_page():
                     with col1:
                         # Geocode address and display map
                         if site_address:
-                            geolocator = Nominatim(user_agent="my_app")
                             location = geolocator.geocode(site_address, addressdetails=True)
                             if location:
                                 latitude, longitude = location.latitude, location.longitude
@@ -178,40 +203,55 @@ def nmi_page():
             #bottom page container
             with st.container():
                 
-
-                    meter_data_df= api_con.get_interval_meter_data(nmi=nmi_in,start_date=start_dt_in, end_date=end_dt_in, grouped_by_nmi=True, drop_estimates=False)
-        
                     #filter for reading type
-                    if read_in =='Export kWh':
-                        #plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='export_kwh']
-                        plot_ser = nmi.meter_data.consumption_kwh
+                    if site_customer == 'Best and Less Pty Ltd':
+                        if read_in =='Export kWh':
+                                plot_ser = nmi.meter_data.consumption_kwh
 
-                    elif read_in =='Import kWh':
-                        #plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='import_kwh']
-                        plot_ser = nmi.meter_data.generation_kwh
+                        elif read_in =='Import kWh':
+                                plot_ser = nmi.meter_data.generation_kwh
+                 
+                        elif read_in == 'Demand kW':
+                            plot_ser = nmi.meter_data.demand_kw
 
-                    elif read_in == 'Demand kW':
-                        plot_ser = nmi.meter_data.demand_kw
+                        elif read_in =='Demand kVA':
+                            plot_ser = nmi.meter_data.demand_kva
 
-                    elif read_in =='Demand kVA':
-                        plot_ser = nmi.meter_data.demand_kva
+                        elif read_in == 'Demand Power Factor':
+                            plot_ser = nmi.meter_data.demand_kw/nmi.meter_data.demand_kva
 
-                    elif read_in == 'Demand Power Factor':
-                        plot_ser = nmi.meter_data.demand_kw/nmi.meter_data.demand_kva
-
-                        #update series name
-                        plot_ser.name = 'Demand Power Factor'
+                            #update series name
+                            plot_ser.name = 'Demand Power Factor'
                         
-                        
+                        else:
+                            st.warning("Functionality for this option hasn't been implemented yet")
+                            plot_ser = pd.Series()
+
+
 
                     else:
-                        #plot_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='export_kwh']
-                        st.warning("Functionality for this option hasn't been implemented yet")
-                        plot_ser = pd.Series()
+                        
+                        meter_data_df= api_con.get_interval_meter_data(nmi=nmi_in,start_date=start_dt_in, end_date=end_dt_in, grouped_by_nmi=True, drop_estimates=False)
+        
+                        if read_in =='Export kWh':
+                                meter_data_df=meter_data_df.loc[meter_data_df['nmi_suffix']=='export_kwh']
+                                
+
+                        elif read_in =='Import kWh':
+                                plot_ser=meter_data_df.loc[meter_data_df['nmi_suffix']=='import_kwh']
+
+                        else:
+                            st.warning("Functionality for this option hasn't been implemented yet")
+                            meter_data_df = pd.DataFrame()
+
+                        plot_ser = meter_data_df['reading']
+                        plot_ser.index = meter_data_df['settlement_datetime']
+
+                    #st.table(plot_ser)
 
                     #convert series to df
                     plot_df = pd.DataFrame(plot_ser)
-                    
+
                     # Create line chart with Plotly
                     fig = px.line(plot_df, x=plot_df.index, y= plot_df.columns[0], title=f'{nmi_in} - {read_in}',
                                   labels={
@@ -260,14 +300,18 @@ def nmi_page():
 
 
 
-
             with st.container():
                     
-                    #create df with all metrics
-                    download_df = pd.concat([nmi.meter_data.consumption_kwh,nmi.meter_data.generation_kwh,nmi.meter_data.demand_kw,nmi.meter_data.demand_kva,nmi.meter_data.demand_kw/nmi.meter_data.demand_kva],axis=1)
+                    if site_customer == 'Best and Less Pty Ltd':
+                    
+                        #create df with all metrics
+                        download_df = pd.concat([nmi.meter_data.consumption_kwh,nmi.meter_data.generation_kwh,nmi.meter_data.demand_kw,nmi.meter_data.demand_kva,nmi.meter_data.demand_kw/nmi.meter_data.demand_kva],axis=1)
 
-                    #update last column name
-                    download_df.rename(columns={download_df.columns[-1]: 'demand_pf'}, inplace=True)
+                        #update last column name
+                        download_df.rename(columns={download_df.columns[-1]: 'demand_pf'}, inplace=True)
+
+                    else:
+                         download_df = plot_df
 
                     # add download button for df
                     csv = convert_df(download_df)

@@ -13,11 +13,7 @@ from modules.utils import *
 img_path = "app/imgs/400dpiLogo.jpg"
 
 
-st.set_page_config(
-    page_title="MTA Energy Executive Dashboard",
-    page_icon=":bar_chart:",
-    layout="wide"
-)
+
 
 if 'sub_key' not in session_state:
     session_state['sub_key'] = False
