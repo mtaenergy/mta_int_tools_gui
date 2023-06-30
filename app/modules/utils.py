@@ -16,13 +16,6 @@ current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
 
 
-st.set_page_config(
-    page_title="MTA Energy Executive Dashboard",
-    page_icon=":bar_chart:",
-    layout="wide"
-)
-
-
 @st.cache_data
 def setup_API_con():
 
@@ -51,7 +44,7 @@ def img_to_bytes(img_path):
     encoded = base64.b64encode(img_bytes).decode()
     return encoded
 
-
+@st.cache_data
 def read_login_pem(file_path:str):
 
     #set lists

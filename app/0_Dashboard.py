@@ -7,12 +7,19 @@ from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
 
+
+st.set_page_config(
+    page_title="MTA Energy Executive Dashboard",
+    page_icon=":bar_chart:",
+    layout="wide"
+)
+
+
+
 from modules.utils import *
 
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
-
-
 
 
 if 'sub_key' not in session_state:
@@ -52,7 +59,7 @@ def home_page():
 
     #logging.info(credentials)
 
-    authenticator = stauth.Authenticate(credentials=credentials,cookie_name="mta_gui_cook",key='abcdef',cookie_expiry_days=30)
+    authenticator = stauth.Authenticate(credentials=credentials,cookie_name="mta_gui_cook",key='abcdef',cookie_expiry_days=1)
 
     name, authentication_status, username  = authenticator.login('Login','main')
 

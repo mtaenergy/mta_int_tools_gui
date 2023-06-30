@@ -15,7 +15,7 @@
             "value": "https://github.com/mtaenergy/mta_int_tools_gui.git"
         },
         "repoBranch": {
-            "value": "dev-azure_deploy-1.0"
+            "value": "main"
         }
     }
 }
