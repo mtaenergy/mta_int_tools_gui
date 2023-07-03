@@ -2,7 +2,6 @@ import streamlit as st
 import streamlit_authenticator as stauth
 from streamlit import session_state
 from PIL import Image
-import pickle
 from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
@@ -15,51 +14,20 @@ st.set_page_config(
 )
 
 
-
 from modules.utils import *
 
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
 
 
-if 'sub_key' not in session_state:
-    session_state['sub_key'] = False
-
-if 'auth_key' not in session_state:
-    session_state['auth_key'] = False
-
-#reset sub key if returned to dashboard
-session_state.sub_key=False
-
-
 #define list of all clients
 client_list = ['Select a customer','Best and Less Pty Ltd','TJX Australia Pty Ltd']
-
 
 
 #setup function for home page
 def home_page():
 
-    # USER AUTHENTICATION
-    names_list,username_list, _ = read_login_pem(Path(__file__).parent.parent)
-
-    #load hashed passwords
-    file_path = Path(__file__).parent.parent/"hashed_pw.pkl"
-    with file_path.open("rb") as file:
-        hashed_passwords = pickle.load(file)
-
-    #setup credentials dict
-    credentials = {
-        "usernames":{}
-    }
-
-    for un, name, pw in zip(username_list, names_list, hashed_passwords):
-        user_dict = {"name":name,"password":pw}
-        credentials["usernames"].update({un:user_dict})
-
-    #logging.info(credentials)
-
-    authenticator = stauth.Authenticate(credentials=credentials,cookie_name="mta_gui_cook",key='abcdef',cookie_expiry_days=1)
+    authenticator, name = setup_authentication()
 
     name, authentication_status, username  = authenticator.login('Login','main')
 
@@ -71,12 +39,12 @@ def home_page():
         st.warning("Please enter a username and password")
 
     if authentication_status:
-        session_state.auth_key=True
         #run app
 
         #configure sidebar
-        authenticator.logout("Logout","sidebar")
+        authenticator.logout("Logout","sidebar",key='unique_key')
         st.sidebar.title(f"Welcome {name}")
+
 
         with st.container():
             col1, col2, col3 = st.columns(3)
@@ -217,4 +185,5 @@ def home_page():
 
 
 
+setup_session_states()
 home_page()

@@ -11,6 +11,8 @@ import base64
 from datetime import date
 import logging
 from geopy.geocoders import Nominatim
+import streamlit_authenticator as stauth
+import pickle
 
 current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
@@ -69,6 +71,53 @@ def read_login_pem(file_path:str):
 
     #return lists
     return names_list,username_list, password_list
+
+
+
+def setup_authentication():
+    # USER AUTHENTICATION
+    names_list,username_list, _ = read_login_pem(Path(__file__).parent.parent.parent)
+
+    #load hashed passwords
+    file_path = Path(__file__).parent.parent.parent/"hashed_pw.pkl"
+    with file_path.open("rb") as file:
+        hashed_passwords = pickle.load(file)
+
+    #setup credentials dict
+    credentials = {
+        "usernames":{}
+    }
+
+    for un, name, pw in zip(username_list, names_list, hashed_passwords):
+        user_dict = {"name":name,"password":pw}
+        credentials["usernames"].update({un:user_dict})
+
+    #logging.info(credentials)
+
+    authenticator = stauth.Authenticate(credentials=credentials,cookie_name="mta_gui_cook",key='abcdef',cookie_expiry_days=1)
+
+    return authenticator, name
+
+
+
+def setup_session_states():
+
+
+    if 'sub_key' not in session_state:
+        session_state['sub_key'] = False
+
+    if 'authentication_status' not in session_state:
+        session_state['authentication_status'] = None
+
+    if 'name' not in session_state:
+        session_state['name'] = ''
+
+    #reset sub key if returned to dashboard
+    #session_state.sub_key=False
+
+
+    logging.info(f"Session state post setup {session_state}")
+
 
 '''
 GET FUNCTIONS TO SQL DB
@@ -481,6 +530,10 @@ def convert_df(df):
 def startup_site():
 
 
+    #startup auth keys
+    setup_session_states()
+
+    #setup API connection
     api_con = setup_API_con()
 
     #get default username and password from logins.pem
@@ -490,10 +543,16 @@ def startup_site():
     username=username_list[0]
     password=password_list[0]
 
+    #setup SQL connection
     sql_con = setup_SQL_con(username=username,password=password)
 
+    #setup connection to geolocator API
     geolocator = setup_geolocator()
 
     return api_con, sql_con, geolocator
 
+
 api_con, sql_con, geolocator = startup_site()
+
+
+

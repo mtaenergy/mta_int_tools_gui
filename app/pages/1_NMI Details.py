@@ -29,7 +29,13 @@ img_path = "app/imgs/400dpiLogo.jpg"
 
 def nmi_page():
 
-    if session_state.auth_key:
+    
+
+    if session_state.authentication_status:
+
+        # #configure sidebar
+        # authenticator.logout("Logout","sidebar",key='unique_key')
+        st.sidebar.title(f"Welcome {st.session_state['name']}")
 
 
         #temporary measure as i figure out how to add logo to be contained to top right
@@ -140,7 +146,7 @@ def nmi_page():
                         #setup site and nmi class using nmi_in
                         site_id = get_site_id(nmi=nmi_in)
                         site = mtatk.mta_class_site.Site(site_id=site_id)
-                        nmi = mtatk.mta_class_nmi.NMI(nmi=site.site_details.nmi, start_date=start_dt_in, end_date=end_dt_in,CERT=cert)
+                        nmi = mtatk.mta_class_nmi.NMI(nmi=site.site_details.nmi, start_date=start_dt_in, end_date=end_dt_in,api_con = api_con)
 
 
                         nmi_details = nmi.standing_data.master_data
@@ -332,4 +338,7 @@ def nmi_page():
                             mime='text/csv',
                             use_container_width=True
                     )
+
+
+setup_session_states()
 nmi_page()

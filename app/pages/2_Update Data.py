@@ -65,15 +65,14 @@ def update_nmi_sd():
 
                     sql_con.update_to_database(update_cols, match_cols,df=edited_df, database='standingdata', table_name=table_name)
 
-
-
-
-
-
-
 def update_page():
 
-    if session_state.auth_key:
+    if session_state.authentication_status:
+
+        # #configure sidebar
+        # authenticator.logout("Logout","sidebar",key='unique_key')
+        st.sidebar.title(f"Welcome {st.session_state['name']}")
+
 
         #temporary measure as i figure out how to add logo to be contained to top right
         with st.container():
@@ -103,4 +102,5 @@ def update_page():
 
 
 
+setup_session_states()
 update_page()

@@ -1,3 +1,5 @@
 *.pem
 *.yaml
 *.pyc
+
+requirements.txt
