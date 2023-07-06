@@ -13,6 +13,8 @@ import logging
 from geopy.geocoders import Nominatim
 import streamlit_authenticator as stauth
 import pickle
+import json
+
 
 current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
@@ -102,7 +104,6 @@ def setup_authentication():
 
 def setup_session_states():
 
-
     if 'sub_key' not in session_state:
         session_state['sub_key'] = False
 
@@ -116,9 +117,18 @@ def setup_session_states():
     #session_state.sub_key=False
 
 
-    logging.info(f"Session state post setup {session_state}")
+    #logging.info(f"Session state post setup {session_state}")
 
+@st.cache_data
+def setup_colour_themes():
+    # Load the colors from the JSON file
+    with open(f'{current_path}/app/themes/customer_theme.json') as file:
+        colours = json.load(file)
 
+    # Assign colors to group names
+    customer_colour_map = {group: colours[group] for group in colours}
+
+    return customer_colour_map
 '''
 GET FUNCTIONS TO SQL DB
 '''
@@ -263,6 +273,12 @@ def get_carbon_stat(lookback_op: str):
 @st.cache_data
 def get_billing_records_prod_df(columns: str, lookback_op: str):
 
+    # Get the current date
+    current_date = date.today()
+
+    # Get the current month
+    current_month = current_date.month
+
     #setup start of query
     query = (f"SELECT [bill_run_end_date],[master_customer],{columns} FROM mtae_ops_billing_billing_records_prod ")
 
@@ -284,12 +300,24 @@ def get_billing_records_prod_df(columns: str, lookback_op: str):
                     "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
         
     elif lookback_op == "FY to date":
-        query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) "
-                        " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE()) , 7, 1)")
+        #if in first half of calendar year
+        if current_month <= 6:
+            query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) "
+                            " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE()) , 7, 1)")
+        #else must be in 2nd half of the year
+        else:
+            query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE()), 7, 1) "
+                            " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE())+1, 7, 1)")
         
     elif lookback_op == "Last FY":
-        query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-2, 7, 1) "
-                        " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE())-1 , 7, 1)")
+        #if in first half of calendar year
+        if current_month <= 6:
+            query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-2, 7, 1) "
+                            " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE())-1 , 7, 1)")
+        #else must be in 2nd half of the year    
+        else:
+            query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) "
+                            " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE()) , 7, 1)")
 
     else:
         st.error("Invalid date range chosen")

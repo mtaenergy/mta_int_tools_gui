@@ -134,27 +134,30 @@ def home_page():
         #container with overview charts
         with st.container():
 
+            customer_colours_map = setup_colour_themes()
+
             #make columns
             col1, col2, col3 = st.columns(3)
 
             with col1:
 
-                fig = px.pie(cost_df, names=cost_df.index, values='total_cost_ex_gst', 
-                             title = 'Total Cost ex GST by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
+                fig = px.pie(cost_df, names=cost_df.index, values='total_cost_ex_gst', color=cost_df.index,
+                             title = 'Total Cost ex GST by Customer',color_discrete_map=customer_colours_map)
+                
 
                 st.plotly_chart(fig, use_container_width=True)
 
             with col2:
 
-                fig = px.pie(cost_df, names=consump_df.index, values='volume', 
-                             title = 'Total Consumption kWh by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
+                fig = px.pie(cost_df, names=consump_df.index, values='volume', color=cost_df.index,
+                             title = 'Total Consumption kWh by Customer',color_discrete_map=customer_colours_map)
 
                 st.plotly_chart(fig, use_container_width=True)
 
             with col3:
 
-                fig = px.pie(carbon_df, names=carbon_df.index, values='carbon_ton', 
-                             title = 'Total Carbon tons by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
+                fig = px.pie(carbon_df, names=carbon_df.index, values='carbon_ton', color=cost_df.index,
+                             title = 'Total Carbon tons by Customer',color_discrete_map=customer_colours_map)
                 
                 #GnBu_r
 
