@@ -54,7 +54,7 @@
       },
       "repoBranch": {
         "type": "string",
-        "defaultValue": "dev-azure_deploy-1.0",
+        "defaultValue": "main",
         "metadata": {
           "description": "Git Repo branch to deploy"
         }

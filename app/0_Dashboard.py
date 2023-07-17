@@ -2,15 +2,9 @@ import streamlit as st
 import streamlit_authenticator as stauth
 from streamlit import session_state
 from PIL import Image
-import pickle
 from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
-
-from modules.utils import *
-
-#image path
-img_path = "app/imgs/400dpiLogo.jpg"
 
 
 st.set_page_config(
@@ -19,44 +13,21 @@ st.set_page_config(
     layout="wide"
 )
 
-if 'sub_key' not in session_state:
-    session_state['sub_key'] = False
 
-if 'auth_key' not in session_state:
-    session_state['auth_key'] = False
+from modules.utils import *
 
-#reset sub key if returned to dashboard
-session_state.sub_key=False
+#image path
+img_path = "app/imgs/400dpiLogo.jpg"
 
 
 #define list of all clients
 client_list = ['Select a customer','Best and Less Pty Ltd','TJX Australia Pty Ltd']
 
 
-
 #setup function for home page
 def home_page():
 
-    # USER AUTHENTICATION
-    names_list,username_list, _ = read_login_pem(Path(__file__).parent.parent)
-
-    #load hashed passwords
-    file_path = Path(__file__).parent.parent/"hashed_pw.pkl"
-    with file_path.open("rb") as file:
-        hashed_passwords = pickle.load(file)
-
-    #setup credentials dict
-    credentials = {
-        "usernames":{}
-    }
-
-    for un, name, pw in zip(username_list, names_list, hashed_passwords):
-        user_dict = {"name":name,"password":pw}
-        credentials["usernames"].update({un:user_dict})
-
-    #logging.info(credentials)
-
-    authenticator = stauth.Authenticate(credentials=credentials,cookie_name="mta_gui_cook",key='abcdef',cookie_expiry_days=30)
+    authenticator, name = setup_authentication()
 
     name, authentication_status, username  = authenticator.login('Login','main')
 
@@ -68,12 +39,12 @@ def home_page():
         st.warning("Please enter a username and password")
 
     if authentication_status:
-        session_state.auth_key=True
         #run app
 
         #configure sidebar
-        authenticator.logout("Logout","sidebar")
+        authenticator.logout("Logout","sidebar",key='unique_key')
         st.sidebar.title(f"Welcome {name}")
+
 
         with st.container():
             col1, col2, col3 = st.columns(3)
@@ -85,7 +56,7 @@ def home_page():
 
         #container for lookback selector
         with st.container():
-            elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year"))
+            elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year", "Last FY", "FY to date"))
 
             logging.info(elected_period)
 
@@ -111,7 +82,7 @@ def home_page():
 
             with col1:
                 #number of serviced sites
-                num_sites = len(get_nmi_list())
+                num_sites = len(billing_df['nmi'].unique().tolist())
 
                 st.metric('Number of serviced sites',num_sites)
 
@@ -163,27 +134,30 @@ def home_page():
         #container with overview charts
         with st.container():
 
+            customer_colours_map = setup_colour_themes()
+
             #make columns
             col1, col2, col3 = st.columns(3)
 
             with col1:
 
-                fig = px.pie(cost_df, names=cost_df.index, values='total_cost_ex_gst', 
-                             title = 'Total Cost ex GST by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
+                fig = px.pie(cost_df, names=cost_df.index, values='total_cost_ex_gst', color=cost_df.index,
+                             title = 'Total Cost ex GST by Customer',color_discrete_map=customer_colours_map)
+                
 
                 st.plotly_chart(fig, use_container_width=True)
 
             with col2:
 
-                fig = px.pie(cost_df, names=consump_df.index, values='volume', 
-                             title = 'Total Consumption kWh by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
+                fig = px.pie(cost_df, names=consump_df.index, values='volume', color=cost_df.index,
+                             title = 'Total Consumption kWh by Customer',color_discrete_map=customer_colours_map)
 
                 st.plotly_chart(fig, use_container_width=True)
 
             with col3:
 
-                fig = px.pie(carbon_df, names=carbon_df.index, values='carbon_ton', 
-                             title = 'Total Carbon tons by Customer',color_discrete_sequence=px.colors.sequential.GnBu_r)
+                fig = px.pie(carbon_df, names=carbon_df.index, values='carbon_ton', color=cost_df.index,
+                             title = 'Total Carbon tons by Customer',color_discrete_map=customer_colours_map)
                 
                 #GnBu_r
 
@@ -214,4 +188,5 @@ def home_page():
 
 
 
+setup_session_states()
 home_page()
