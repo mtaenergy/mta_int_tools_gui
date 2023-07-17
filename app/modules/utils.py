@@ -21,7 +21,12 @@ cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
 
 
 @st.cache_data
-def setup_API_con():
+def setup_API_con() -> APIConnector:
+    """Summary of setup_API_con: Function to setup API Connector object for use in app
+
+    Returns:
+        APIConnector:  API Connector object
+    """
 
     #create API Connector object
     api_connector=APIConnector(cert=cert)
@@ -30,6 +35,15 @@ def setup_API_con():
 
 @st.cache_resource
 def setup_SQL_con(username: str, password: str) -> SQLConnector:
+    """ Summary of setup_SQL_con: Function to setup SQL Connector object for use in app
+
+    Args:
+        username (str): username of the account to connect to SQL server
+        password (str): password of the account to connect to SQL server
+
+    Returns:
+        SQLConnector: SQL Connector object
+    """
 
     #create SQL Connection object
     sql_con = SQLConnector(username=username,password=password)
@@ -37,19 +51,34 @@ def setup_SQL_con(username: str, password: str) -> SQLConnector:
     return sql_con
 
 @st.cache_data
-def setup_geolocator():
+def setup_geolocator() -> Nominatim:
+    """ Summary of setup_geolocator: Function to setup geolocator object for use in app
+
+    Returns:
+        Nominatim: geolocator object
+    """
     geolocator = Nominatim(user_agent="my_app")
 
     return geolocator
 
 @st.cache_data
-def img_to_bytes(img_path):
+def img_to_bytes(img_path: str) -> str:
+    """Summary of img_to_bytes: Function to convert image to base64 string"""
+
     img_bytes = Path(img_path).read_bytes()
     encoded = base64.b64encode(img_bytes).decode()
     return encoded
 
 @st.cache_data
-def read_login_pem(file_path:str):
+def read_login_pem(file_path:str) -> tuple:
+    """Summary of read_login_pem: Function to read login.pem file and return lists of names, usernames and passwords
+
+    Args:
+        file_path (str): path to login.pem file
+
+    Returns:
+        tuple: tuple of lists of names, usernames and passwords
+    """
 
     #set lists
     names_list =[]
@@ -76,7 +105,13 @@ def read_login_pem(file_path:str):
 
 
 
-def setup_authentication():
+def setup_authentication()-> tuple:
+    """Summary of setup_authentication: Function to setup authentication for app
+
+    Returns:
+        tuple: tuple of authenticator object and name of user
+    """
+
     # USER AUTHENTICATION
     names_list,username_list, _ = read_login_pem(Path(__file__).parent.parent.parent)
 
@@ -103,7 +138,10 @@ def setup_authentication():
 
 
 def setup_session_states():
+    """_summary_of_setup_session_states: Function to setup session states for app
+    """
 
+    #setup session states
     if 'sub_key' not in session_state:
         session_state['sub_key'] = False
 
@@ -120,7 +158,12 @@ def setup_session_states():
     #logging.info(f"Session state post setup {session_state}")
 
 @st.cache_data
-def setup_colour_themes():
+def setup_colour_themes()-> dict:
+    """_summary_of_setup_colour_themes: Function to setup colour themes for app
+
+    Returns:
+        dict: dictionary of colour themes for each customer
+    """
     # Load the colors from the JSON file
     with open(f'{current_path}/app/themes/customer_theme.json') as file:
         colours = json.load(file)
@@ -134,7 +177,15 @@ GET FUNCTIONS TO SQL DB
 '''
 
 @st.cache_data
-def get_cost_stat(lookback_op: str):
+def get_cost_stat(lookback_op: str)-> float:
+    """Summary of get_cost_stat: Function to get total cost excluding GST  from billing_records_prod based on lookback option selected
+
+    Args:
+        lookback_op (str): lookback option 
+
+    Returns:
+        float: total cost excluding GST
+    """
 
     #casewhere where depending on the lookback option chosen, the query will be different
     if lookback_op =="Last Month":
@@ -177,7 +228,15 @@ def get_cost_stat(lookback_op: str):
     return total_cost_str
 
 @st.cache_data
-def get_consump_stat(lookback_op: str):
+def get_consump_stat(lookback_op: str)-> float:
+    """Summary of get_consump_stat: Function to get total consumption from billing_records_prod based on lookback option selected
+
+    Args:
+        lookback_op (str): lookback option
+
+    Returns:
+        float: total consumption in kwh
+    """
 
     #casewhere where depending on the lookback option chosen, the query will be different
     if lookback_op =="Last Month":
@@ -224,7 +283,15 @@ def get_consump_stat(lookback_op: str):
     return total_consump_str
 
 @st.cache_data
-def get_carbon_stat(lookback_op: str):
+def get_carbon_stat(lookback_op: str)-> float:
+    """Summary of get_carbon_stat: Function to get total carbon from billing_records_prod based on lookback option selected
+
+    Args:
+        lookback_op (str): lookback option
+
+    Returns:
+        float: total carbon in kg
+    """
 
     #casewhere where depending on the lookback option chosen, the query will be different
     if lookback_op =="Last Month":
@@ -271,7 +338,16 @@ def get_carbon_stat(lookback_op: str):
     return total_carbon_str
 
 @st.cache_data
-def get_billing_records_prod_df(columns: str, lookback_op: str):
+def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
+    """Summary of get_billing_records_prod_df: Function to get billing_records_prod data based on lookback option selected and columns chosen
+
+    Args:
+        columns (str): string of columns to select from table alongside bill_run_end_date and master_customer
+        lookback_op (str): lookback option
+
+    Returns:
+        pd.DataFrame: dataframe of billing_records_prod data
+    """
 
     # Get the current date
     current_date = date.today()
@@ -334,7 +410,11 @@ def get_billing_records_prod_df(columns: str, lookback_op: str):
     return billing_df
 
 @st.cache_data
-def get_customer_list():
+def get_customer_list()-> list:
+    """Summary of get_customer_list: Function to get list of customers from standing data
+    
+    Returns:
+        list: list of customers"""
 
     #setup query
     table_name="mtae_ops_billing_nmi_standing_data_prod"
@@ -349,7 +429,12 @@ def get_customer_list():
     return customer_list
 
 @st.cache_data
-def get_nmi_list():
+def get_nmi_list()-> list:
+    """Summary of get_nmi_list: Function to get list of active nmis from standing data as of today
+
+    Returns:
+        list: list of nmis
+    """
 
     #get current date
     current_day = date.today().strftime("%Y-%m-%d")
@@ -380,6 +465,14 @@ def get_nmi_list():
 
 @st.cache_data
 def get_nmi_msats_data(nmi: str) -> pd.DataFrame:
+    """Summary of get_nmi_msats_data: Function to get msats data for a given nmi
+
+    Args:
+        nmi (str): nmi to get msats data for
+
+    Returns:
+        pd.DataFrame: dataframe of msats data for nmi
+    """
 
     #setup query
     table_name="aemo_msats_cats_nmi_data"
@@ -394,7 +487,15 @@ def get_nmi_msats_data(nmi: str) -> pd.DataFrame:
     return nmi_msats_df.iloc[0]
 
 @st.cache_data 
-def get_nmi_tariff(nmi: str):
+def get_nmi_tariff(nmi: str)-> pd.DataFrame:
+    """ Summary of get_nmi_tariff: Function to get tariff data for a given nmi
+
+    Args:
+        nmi (str): nmi to get tariff data for
+
+    Returns:
+        pd.DataFrame: dataframe of tariff data for nmi
+    """
 
     #setup query
     table_name="aemo_msats_cats_register_identifier"
@@ -409,7 +510,15 @@ def get_nmi_tariff(nmi: str):
     return nmi_register_df.iloc[0]
 
 @st.cache_data
-def get_nmi_customer(nmi: str):
+def get_nmi_customer(nmi: str)-> pd.DataFrame:
+    """Summary of get_nmi_customer: Function to get customer data for a given nmi
+
+    Args:
+        nmi (str): nmi to get customer data for
+
+    Returns:
+        pd.DataFrame: dataframe of customer data for nmi
+    """
 
     #setup query
     table_name="mtae_ops_billing_nmi_standing_data_prod"
@@ -424,7 +533,15 @@ def get_nmi_customer(nmi: str):
     return nmi_customer_df.iloc[0]
 
 @st.cache_data
-def get_nmi_participants(nmi: str):
+def get_nmi_participants(nmi: str)-> pd.DataFrame:
+    """Summary of get_nmi_participants: Function to get participant data for a given nmi
+
+    Args:
+        nmi (str): nmi to get participant data for
+
+    Returns:
+        pd.DataFrame: dataframe of participant data for nmi
+    """
 
     #setup query
     table_name="aemo_msats_cats_nmi_participant_relations"
@@ -440,14 +557,14 @@ def get_nmi_participants(nmi: str):
 ## SITE ALIAS FUNCTIONS
 
 @st.cache_data
-def get_customer_sites(billied_entity_alias: str):
+def get_customer_sites(billied_entity_alias: str)-> pd.DataFrame:
     """Get the ordered list of sites for a seleted customer
 
     Args:
-        billied_entity_alias (str): _description_
+        billied_entity_alias (str):alias for the billing entity
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: dataframe of sites for customer
     """
 
     # #setup query
@@ -480,7 +597,15 @@ def get_customer_sites(billied_entity_alias: str):
     return sites_list
 
 @st.cache_data
-def get_site_nmis(site_alias: str):
+def get_site_nmis(site_alias: str)-> pd.DataFrame:
+    """Get the ordered list of nmis for a seleted site
+
+    Args:
+        site_alias (str): alias for the site
+
+    Returns:
+        pd.DataFrame: dataframe of nmis for site
+    """
 
     # #setup query
     # table_name="site"
@@ -526,6 +651,14 @@ def get_site_nmis(site_alias: str):
 
 @st.cache_data
 def get_site_id(nmi: str)->str:
+    """Get the site id for a given nmi
+
+    Args:
+        nmi (str): nmi to get site id for
+
+    Returns:
+        str: site id for nmi
+    """
     #setup query
     table_name="site"
     query = (f"SELECT * FROM {table_name} "
@@ -544,13 +677,23 @@ def get_site_id(nmi: str)->str:
 ## PUSH FUNCTIONS
 
 def clear_flag():
+    """_summary_: Function to clear the flag for the push button
+    """
     session_state.sub_key=False
     
 
 
 
 @st.cache_data
-def convert_df(df):
+def convert_df(df: pd.DataFrame)->bytes:
+    """_summary_: Function to convert a dataframe to a csv file
+
+    Args:
+        df (pd.DataFrame): dataframe to convert
+
+    Returns:
+        bytes: csv file
+    """
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
     return df.to_csv().encode('utf-8')
 
@@ -581,6 +724,7 @@ def startup_site():
 
 
 api_con, sql_con, geolocator = startup_site()
+
 
 
 
