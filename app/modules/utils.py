@@ -69,7 +69,6 @@ def img_to_bytes(img_path: str) -> str:
     encoded = base64.b64encode(img_bytes).decode()
     return encoded
 
-@st.cache_data
 def read_login_pem(file_path:str) -> tuple:
     """Summary of read_login_pem: Function to read login.pem file and return lists of names, usernames and passwords
 
