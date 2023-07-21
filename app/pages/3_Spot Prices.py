@@ -63,7 +63,6 @@ async def display_predispatch_data():
 
     #get initial data
     predispatch_df=get_predispatch_data_30min()
-    st.dataframe(predispatch_df)
 
     #query the database for the data
     while True:
@@ -91,7 +90,7 @@ async def display_predispatch_data():
                 st.plotly_chart(fig, use_container_width=True)
 
         r= await asyncio.sleep(60)
-
+        nsw_container.empty()
 
 def _display_state_table(df: pd.DataFrame)->None:
     pass
@@ -99,7 +98,7 @@ def _display_state_table(df: pd.DataFrame)->None:
 
 
 
-def spot_price_page():
+async def spot_price_page():
     if session_state.authentication_status:
         #configure sidebar to have user name
         st.sidebar.title(f"Welcome {st.session_state['name']}")
@@ -115,13 +114,13 @@ def spot_price_page():
 
     with tab1:
         st.header("Dispatch Prices")
-        asyncio.run(display_dispatch_data())
+        asyncio.create_task(display_dispatch_data())
 
     with tab2:
         st.header("Pre-Dispatch Prices")
-        asyncio.run(display_predispatch_data())
+        asyncio.create_task(display_predispatch_data())
 
 
 
 setup_session_states()
-spot_price_page()
+asyncio.run(spot_price_page())
