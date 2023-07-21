@@ -552,6 +552,72 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
 
     return nmi_participants_df
 
+@st.cache_data
+def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
+    """Summary of get_dispatch_data: Function to get the most recent dispatch data for the market
+
+    Args:
+        lookback_hours (int): number of hours to lookback
+
+    Returns:
+        pd.DataFrame: dataframe of dispatch data
+    """
+
+    #setup query
+    table_name="aemo_emms_dispatch_price"
+    timezone_add = 10 #need to set to convert UTC to AEST
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
+             f"ORDER BY SETTLEMENTDATE asc")
+    
+    #get dispatch data
+    dispatch_df=sql_con.query_sql(query=query,database='timeseries')
+
+    return dispatch_df
+
+@st.cache_data
+def get_predispatch_data_30min(lookback_hours: int)-> pd.DataFrame:
+    """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 30min intervals
+
+    Args:
+        lookback_hours (int): number of hours to lookback
+
+    Returns:
+        pd.DataFrame: dataframe of predispatch data
+    """
+
+    #setup query
+    table_name="aemo_emms_predispatch_30min"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE timestamp >= DATE_SUB(NOW(), INTERVAL {lookback_hours} HOUR)'")
+    
+    #get dispatch data
+    dispatch_df=sql_con.query_sql(query=query,database='timeseries')
+
+    return dispatch_df
+
+@st.cache_data
+def get_predispatch_data_5min(lookback_hours: int)-> pd.DataFrame:
+    """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 5min intervals
+
+    Args:
+        lookback_hours (int): number of hours to lookback
+
+    Returns:
+        pd.DataFrame: dataframe of predispatch data
+    """
+
+    #setup query
+    table_name="aemo_emms_predispatch_5min"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE timestamp >= DATE_SUB(NOW(), INTERVAL {lookback_hours} HOUR)'")
+    
+    #get dispatch data
+    dispatch_df=sql_con.query_sql(query=query,database='timeseries')
+
+    return dispatch_df
+
+
 ## SITE ALIAS FUNCTIONS
 
 @st.cache_data
