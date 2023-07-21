@@ -7,4 +7,7 @@ protobuf
 geopy
 folium
 plotly
-git+https://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:x-oauth-basic@github.com/mtaenergy/mtatk.git@main
+azure-identity
+azure-keyvault-secrets
+azure-keyvault-certificates
+
