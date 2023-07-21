@@ -5,6 +5,7 @@ from PIL import Image
 from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
+import cProfile
 
 
 st.set_page_config(
@@ -57,8 +58,6 @@ def home_page():
         #container for lookback selector
         with st.container():
             elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year", "Last FY", "FY to date"))
-
-            logging.info(elected_period)
 
             # collect billing df based on elected period
             columns='[nmi],[total_cost_ex_gst],[charge_group],[charge_name],[volume],[scaling_factor],[loss_factor]'
@@ -115,7 +114,7 @@ def home_page():
             with col4:
 
                 #filter for only rows with Carbon as charge name
-                carbon_df = billing_df.loc[billing_df['charge_name']=='Carbon']
+                carbon_df = billing_df[billing_df['charge_name']=='Carbon'].copy()
 
                 #create new column which is the multiplication of volume, loss factor and scaling factor
                 carbon_df['carbon_ton'] = carbon_df['volume']*carbon_df['scaling_factor']*carbon_df['loss_factor']/1000
@@ -187,6 +186,13 @@ def home_page():
             st.plotly_chart(fig, use_container_width=True)
 
 
+def main():
 
-setup_session_states()
-home_page()
+    #setup session states
+    setup_session_states()
+    home_page()
+
+if __name__ == "__main__":
+    main()
+
+
