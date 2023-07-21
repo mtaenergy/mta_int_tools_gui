@@ -552,7 +552,7 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
 
     return nmi_participants_df
 
-@st.cache_data
+
 def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch data for the market
 
@@ -575,8 +575,8 @@ def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
 
     return dispatch_df
 
-@st.cache_data
-def get_predispatch_data_30min(lookback_hours: int)-> pd.DataFrame:
+
+def get_predispatch_data_30min()-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 30min intervals
 
     Args:
@@ -589,14 +589,14 @@ def get_predispatch_data_30min(lookback_hours: int)-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_predispatch_30min"
     query = (f"SELECT * FROM {table_name} "
-             f"WHERE timestamp >= DATE_SUB(NOW(), INTERVAL {lookback_hours} HOUR)'")
+             f"WHERE DATETIME = (SELECT MAX(DATETIME) FROM {table_name})")
     
-    #get dispatch data
-    dispatch_df=sql_con.query_sql(query=query,database='timeseries')
+    #get predispatch data
+    predispatch_df=sql_con.query_sql(query=query,database='timeseries')
 
-    return dispatch_df
+    return predispatch_df
 
-@st.cache_data
+
 def get_predispatch_data_5min(lookback_hours: int)-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 5min intervals
 
@@ -610,12 +610,12 @@ def get_predispatch_data_5min(lookback_hours: int)-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_predispatch_5min"
     query = (f"SELECT * FROM {table_name} "
-             f"WHERE timestamp >= DATE_SUB(NOW(), INTERVAL {lookback_hours} HOUR)'")
+             f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})")
     
-    #get dispatch data
-    dispatch_df=sql_con.query_sql(query=query,database='timeseries')
+    #get predispatch data
+    predispatch_df=sql_con.query_sql(query=query,database='timeseries')
 
-    return dispatch_df
+    return predispatch_df
 
 
 ## SITE ALIAS FUNCTIONS

@@ -57,13 +57,40 @@ async def display_dispatch_data():
                 st.plotly_chart(fig, use_container_width=True)
 
         r= await asyncio.sleep(60)
-        #nsw_container.empty()
+        nsw_container.empty()
 
 async def display_predispatch_data():
 
-        #get initial data
-    lookback_hours = 24
-    predispatch_df=get_predispatch_data_30min(lookback_hours)
+    #get initial data
+    predispatch_df=get_predispatch_data_30min()
+    st.dataframe(predispatch_df)
+
+    #query the database for the data
+    while True:
+    
+        nsw_container = st.empty()
+
+        #display NSW table and graph
+        with nsw_container.container():
+            col1, col2 = st.columns(2)
+            st.header("NSW")
+            with col1:
+                st.dataframe(predispatch_df[predispatch_df['REGIONID']=='NSW1'])
+
+            with col2:
+                plot_df =predispatch_df[predispatch_df['REGIONID']=='NSW1'].copy()
+
+                # Create line chart with Plotly
+                fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
+                                labels={
+                                    plot_df['PRED_DATETIME'].name:'Date',
+                                    plot_df['RRP'].name: 'RRP' 
+                                })
+        
+                #render fig
+                st.plotly_chart(fig, use_container_width=True)
+
+        r= await asyncio.sleep(60)
 
 
 def _display_state_table(df: pd.DataFrame)->None:
