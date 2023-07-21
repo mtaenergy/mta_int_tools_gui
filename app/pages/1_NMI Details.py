@@ -5,6 +5,8 @@ import plotly.express as px
 from streamlit import session_state
 from PIL import Image
 import mtatk
+import time
+import logging
 
 
 from modules.utils import *
@@ -142,16 +144,26 @@ def nmi_page():
 
 
                     else:
+                        
 
                         #setup site and nmi class using nmi_in
+                        start_time = time.perf_counter()
                         site_id = get_site_id(nmi=nmi_in)
+                        test_perf(start_time=start_time,end_time=time.perf_counter(),function_name='get_site_id')
+
+                        start_time = time.perf_counter()
                         site = mtatk.mta_class_site.Site(site_id=site_id)
+                        test_perf(start_time=start_time,end_time=time.perf_counter(),function_name='mtatk.mta_class_site.Site')
+
+                        start_time = time.perf_counter()
                         nmi = mtatk.mta_class_nmi.NMI(nmi=site.site_details.nmi, start_date=start_dt_in, end_date=end_dt_in,api_con = api_con)
+                        test_perf(start_time=start_time,end_time=time.perf_counter(),function_name='mtatk.mta_class_nmi.NMI')
 
-
+                        start_time = time.perf_counter()
                         nmi_details = nmi.standing_data.master_data
                         nmi_reg_details = nmi.standing_data.registers
                         nmi_party_details = nmi.standing_data.roles
+                        test_perf(start_time=start_time,end_time=time.perf_counter(),function_name='retrieval of nmi details')
 
                         #logging.info(nmi_details)
  
@@ -184,13 +196,18 @@ def nmi_page():
                     col1, col2 = st.columns(2)
 
                     with col1:
+                        start_time = time.perf_counter()
                         # Geocode address and display map
                         if site_address:
-                            location = geolocator.geocode(site_address, addressdetails=True)
-                            if location:
-                                latitude, longitude = location.latitude, location.longitude
-                                location_df = pd.DataFrame(data=[[latitude,longitude]],columns=['lat','lon'])
-                                st.map(location_df, use_container_width=True)
+                            try:
+                                location = geolocator.geocode(site_address, addressdetails=True)
+                                if location:
+                                    latitude, longitude = location.latitude, location.longitude
+                                    location_df = pd.DataFrame(data=[[latitude,longitude]],columns=['lat','lon'])
+                                    st.map(location_df, use_container_width=True)
+                            except:
+                                 st.warning('Unable to geocode address. Try again')
+                        test_perf(start_time=start_time,end_time=time.perf_counter(),function_name='retrieval of geocode address')
             
 
                     with col2:
@@ -214,6 +231,7 @@ def nmi_page():
                 
                     #filter for reading type
                     if site_customer == 'Best and Less Pty Ltd':
+                        start_time = time.perf_counter()
                         if read_in =='Export kWh':
                                 plot_ser = nmi.meter_data.consumption_kwh
 
@@ -235,6 +253,8 @@ def nmi_page():
                         else:
                             st.warning("Functionality for this option hasn't been implemented yet")
                             plot_ser = pd.Series()
+
+                        test_perf(start_time=start_time,end_time=time.perf_counter(),function_name='retrieval of nmi.meter_data')
 
 
 

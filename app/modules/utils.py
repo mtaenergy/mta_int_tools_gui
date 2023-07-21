@@ -19,6 +19,27 @@ import json
 current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
 
+# Set the desired logging level
+logging.getLogger("azure.core").setLevel(logging.WARNING)
+logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
+logging.getLogger("azure.pipeline").setLevel(logging.WARNING)
+logging.getLogger("msal").setLevel(logging.WARNING)
+
+def test_perf(start_time: float, end_time: float,function_name: str) -> None:
+    """Summary of test_perf: Function to test performance of app
+
+    Args:
+        start_time (float): start time of app
+        end_time (float): end time of app
+    """
+
+    #calculate time taken
+    time_taken = end_time-start_time
+
+    #print time taken
+    logging.info(f"Time taken for function {function_name}: {time_taken} seconds")
+
+
 
 @st.cache_data
 def setup_API_con() -> APIConnector:
