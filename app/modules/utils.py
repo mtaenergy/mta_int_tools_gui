@@ -102,8 +102,6 @@ def read_login_pem(file_path:str) -> tuple:
     #return lists
     return names_list,username_list, password_list
 
-
-
 def setup_authentication()-> tuple:
     """Summary of setup_authentication: Function to setup authentication for app
 
@@ -133,8 +131,6 @@ def setup_authentication()-> tuple:
     authenticator = stauth.Authenticate(credentials=credentials,cookie_name="mta_gui_cook",key='abcdef',cookie_expiry_days=1)
 
     return authenticator, name
-
-
 
 def setup_session_states():
     """_summary_of_setup_session_states: Function to setup session states for app
@@ -171,6 +167,7 @@ def setup_colour_themes()-> dict:
     customer_colour_map = {group: colours[group] for group in colours}
 
     return customer_colour_map
+
 '''
 GET FUNCTIONS TO SQL DB
 '''
@@ -552,7 +549,6 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
 
     return nmi_participants_df
 
-
 ## SITE ALIAS FUNCTIONS
 
 @st.cache_data
@@ -674,15 +670,11 @@ def get_site_id(nmi: str)->str:
     
 
 ## PUSH FUNCTIONS
-
 def clear_flag():
     """_summary_: Function to clear the flag for the push button
     """
     session_state.sub_key=False
     
-
-
-
 @st.cache_data
 def convert_df(df: pd.DataFrame)->bytes:
     """_summary_: Function to convert a dataframe to a csv file
