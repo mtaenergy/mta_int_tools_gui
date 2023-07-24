@@ -36,6 +36,13 @@ def generation_page():
         #configure sidebar to have user name
         st.sidebar.title(f"Welcome {st.session_state['name']}")
 
+        with st.container():
+            generation_view = st.selectbox("Select a generation view option", ("Dispatch", "Pre-Dispatch 30 Min", "Pre-Dispatch 5 Min"),key='gen_select')
+
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(['NSW', 'QLD', 'VIC', 'SA', 'TAS'])
+
+
+
         
 setup_session_states()
 
