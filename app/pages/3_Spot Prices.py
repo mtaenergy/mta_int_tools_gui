@@ -145,29 +145,29 @@ def spot_price_page():
     if session_state.authentication_status:
         #configure sidebar to have user name
         st.sidebar.title(f"Welcome {st.session_state['name']}")
+        price_view = st.sidebar.radio("Select Option", ("Dispatch", "Pre-Dispatch 30 Min", "Pre-Dispatch 5 Min"))
+
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(['NSW', 'QLD', 'VIC', 'SA', 'TAS'])
 
 
-    tab1, tab2 = st.tabs(['Dispatch','Pre-Dispatch'])
-
-
-    
-    with tab1:
-        st.header("Dispatch Prices")
-        display_dispatch_data()
-
-
-    # with tab2:
-    #     st.header("Pre-Dispatch Prices")
         
-    #     nsw_container_pre = st.empty()
-    #     display_predispatch_data(nsw_container_pre)
-        
+        with tab1:
+            st.header(f"NSW {price_view}")
+            display_dispatch_data()
 
-    if refresh_count % 5 == 0:
-        st.cache_data.clear()
-        logging.info(f"Cache cleared")
 
-    logging.info(f"Refresh Count: {refresh_count}")
+        # with tab2:
+        #     st.header("Pre-Dispatch Prices")
+            
+        #     nsw_container_pre = st.empty()
+        #     display_predispatch_data(nsw_container_pre)
+            
+
+        if refresh_count % 5 == 0:
+            st.cache_data.clear()
+            logging.info(f"Cache cleared")
+
+        logging.info(f"Refresh Count: {refresh_count}")
 
 
 
