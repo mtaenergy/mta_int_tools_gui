@@ -56,7 +56,6 @@ def display_dispatch_data(state: str):
             st.plotly_chart(fig, use_container_width=True)
 
 
-
 def display_predispatch_30min_data(state: str):
 
     #get initial data
@@ -83,8 +82,6 @@ def display_predispatch_30min_data(state: str):
     
             #render fig
             st.plotly_chart(fig, use_container_width=True)
-
-
 
 
 def display_predispatch_5min_data(state: str):
@@ -116,23 +113,48 @@ def display_predispatch_5min_data(state: str):
             st.plotly_chart(fig, use_container_width=True)
 
 
+def display_UIGF_data(state: str):
+    #get initial data
+    predispatch_df=get_predispatch_data_5min(region_id=state)
 
+    #filter for just UIGF
+    UIGF_df = predispatch_df[['SS_SOLAR_UIGF','SS_WIND_UIGF']]
+
+    #take the sum of each UIGF
+    UIGF_df = pd.DataFrame(UIGF_df.sum())
+
+    #add column names
+    UIGF_df.rename(columns={0:'totals'}, inplace=True)
+
+
+    #display pie chart of UIGF breakdown
+    fig = px.pie(UIGF_df, values='totals', names=UIGF_df.index, title='UIGF Breakdown')
+
+    #render fig
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def display_gen_view(price_view: str, state:str)->None:
+
+    col1, col2 = st.columns([0.3,0.7])
+
+    with col1:
+            display_UIGF_data(state=state)
+
+    with col2:
     
-    #select the correct view
-    if price_view == "Dispatch":
-        display_dispatch_data(state=state)
+        #select the correct view
+        if price_view == "Dispatch":
+            display_dispatch_data(state=state)
 
-    elif price_view == "Pre-Dispatch 30 Min":
-        display_predispatch_30min_data(state=state)
+        elif price_view == "Pre-Dispatch 30 Min":
+            display_predispatch_30min_data(state=state)
 
-    elif price_view == "Pre-Dispatch 5 Min":
-        display_predispatch_5min_data(state=state)
+        elif price_view == "Pre-Dispatch 5 Min":
+            display_predispatch_5min_data(state=state)
 
-    else:
-        raise ValueError("Invalid option selected. Make sure the option selected is a valid option")
+        else:
+            raise ValueError("Invalid option selected. Make sure the option selected is a valid option")
 
 
 def generation_page():
