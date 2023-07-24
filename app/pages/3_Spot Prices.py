@@ -7,9 +7,8 @@ import plotly.express as px
 from streamlit import session_state
 from PIL import Image
 import mtatk
-import time
-import asyncio
 from streamlit_autorefresh import st_autorefresh
+from itertools import cycle, islice 
 
 from modules.utils import *
 
@@ -26,9 +25,18 @@ st.markdown("""
         """, unsafe_allow_html=True)
 
 
-# update every 1 min
+# update every 20 seconds
 refresh_count=0
-refresh_count=st_autorefresh(interval=60*1000, key="pricerefresh")
+refresh_count=st_autorefresh(interval=5*1000, key="pricerefresh")
+
+states_list=['NSW', 'QLD', 'VIC', 'SA', 'TAS']
+states_progress_bar={
+    'NSW': 0,
+    'QLD': 0.25,
+    'VIC': 0.5,
+    'SA': 0.75,
+    'TAS': 1.0
+}
 
 
 def update_spot_price_view_state(option:str)->None:
@@ -191,34 +199,26 @@ def spot_price_page():
         st.sidebar.title(f"Welcome {st.session_state['name']}")
         price_view = st.sidebar.radio("Select a price view option", ("Dispatch", "Pre-Dispatch 30 Min", "Pre-Dispatch 5 Min"))
 
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(['NSW', 'QLD', 'VIC', 'SA', 'TAS'])
+        #set current state in view
+        state = states_list[session_state.live_state]
 
 
-        with tab1:
-            st.header(f"NSW {price_view}")
-            display_spot_price_view(price_view=price_view,state="NSW1")
+        #display spot price view
+        st.header(f"{state} {price_view}")
+        display_spot_price_view(price_view=price_view,state=f"{state}1")
 
-        with tab2:
-            st.header(f"QLD {price_view}")
-            display_spot_price_view(price_view=price_view,state="QLD1")
-
-        with tab3:
-            st.header(f"VIC {price_view}")
-            display_spot_price_view(price_view=price_view,state="VIC1")
-
-        with tab4:
-            st.header(f"SA {price_view}")
-            display_spot_price_view(price_view=price_view,state="SA1")
-
-        with tab5:
-            st.header(f"TAS {price_view}")
-            display_spot_price_view(price_view=price_view,state="TAS1")
-
+        #display progress bar to show which state is currently being displayed
+        st.progress(states_progress_bar[state])
 
 
         if refresh_count % 1 == 0:
             #st.cache_data.clear()
-            logging.info(f"Cache cleared")
+            logging.info(f"refresh cleared")
+            logging.info(f"index count {session_state.live_state}")
+
+            session_state.live_state +=1
+            if session_state.live_state ==len(states_list):
+                session_state.live_state=0 
 
         
 setup_session_states()
