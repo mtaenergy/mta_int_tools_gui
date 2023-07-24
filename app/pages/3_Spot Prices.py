@@ -28,7 +28,7 @@ st.markdown("""
 
 # update every 1 min
 refresh_count=0
-refresh_count=st_autorefresh(interval=5*1000, key="pricerefresh")
+refresh_count=st_autorefresh(interval=60*1000, key="pricerefresh")
 
 
 def update_spot_price_view_state(option:str)->None:
@@ -119,7 +119,7 @@ def display_predispatch_5min_data(state: str):
 def display_df_info(df: pd.DataFrame) -> None:
 
     #get latest rrp
-    latest_rrp = df.iloc[-1,:]['RRP']
+    latest_rrp = df.iloc[0,:]['RRP']
 
     #format as string
     latest_rrp_str = "{:,.2f}".format(latest_rrp)
