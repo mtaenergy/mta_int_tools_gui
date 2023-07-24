@@ -554,7 +554,7 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
 
 
 def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
-    """Summary of get_dispatch_data: Function to get the most recent dispatch data for the market
+    """Summary of get_dispatch_data: Function to get the most recent dispatch pricedata for the market
 
     Args:
         lookback_hours (int): number of hours to lookback
@@ -565,6 +565,30 @@ def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
 
     #setup query
     table_name="aemo_emms_dispatch_price"
+    timezone_add = 10 #need to set to convert UTC to AEST
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
+             f"AND REGIONID = '{region_id}' "
+             f"ORDER BY SETTLEMENTDATE desc")
+    
+    #get dispatch data
+    dispatch_df=sql_con.query_sql(query=query,database='timeseries')
+
+    return dispatch_df
+
+def get_dispatch_demand_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
+    """Summary of get_dispatch_data: Function to get the most recent dispatch demand data for the market
+
+    Args:
+        lookback_hours (int): number of hours to lookback
+        region_id (str): region to get dispatch data for
+
+    Returns:
+        pd.DataFrame: dataframe of dispatch data
+    """
+
+    #setup query
+    table_name="aemo_emms_dispatch_demand"
     timezone_add = 10 #need to set to convert UTC to AEST
     query = (f"SELECT * FROM {table_name} "
              f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
