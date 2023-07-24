@@ -61,7 +61,7 @@ def display_dispatch_data(state: str):
 
             
 
-def display_predispatch_data(container: st.container):
+def display_predispatch_30min_data(state: str):
 
     #get initial data
     predispatch_df=get_predispatch_data_30min()
@@ -88,12 +88,47 @@ def display_predispatch_data(container: st.container):
             #render fig
             st.plotly_chart(fig, use_container_width=True)
 
+def display_predispatch_5min_data(state: str):
 
+    #get initial data
+    predispatch_df=get_predispatch_data_30min()
 
-def _display_state_table(df: pd.DataFrame)->None:
-    pass
+    #query the database for the data
 
+    #display NSW table and graph
+    with container.container():
+        col1, col2 = st.columns(2)
+        st.header("NSW")
+        with col1:
+            st.dataframe(predispatch_df[predispatch_df['REGIONID']=='NSW1'])
 
+        with col2:
+            plot_df =predispatch_df[predispatch_df['REGIONID']=='NSW1'].copy()
+
+            # Create line chart with Plotly
+            fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
+                            labels={
+                                plot_df['PRED_DATETIME'].name:'Date',
+                                plot_df['RRP'].name: 'RRP' 
+                            })
+    
+            #render fig
+            st.plotly_chart(fig, use_container_width=True)
+
+def display_spot_price_view(price_view: str, state:str)->None:
+    
+    #select the correct view
+    if price_view == "Dispatch":
+        display_dispatch_data(state=state)
+
+    elif price_view == "Pre-Dispatch 30 Min":
+        display_predispatch_30min_data(state=state)
+
+    elif price_view == "Pre-Dispatch 5 Min":
+        display_predispatch_5min_data(state=state)
+
+    else:
+        raise ValueError("Invalid option selected. Make sure the option selected is a valid option")
 
 
 def spot_price_page():
@@ -107,23 +142,23 @@ def spot_price_page():
 
         with tab1:
             st.header(f"NSW {price_view}")
-            display_dispatch_data(state="NSW1")
+            display_spot_price_view(price_view=price_view,state="NSW1")
 
         with tab2:
             st.header(f"QLD {price_view}")
-            display_dispatch_data(state="QLD1")
+            display_spot_price_view(price_view=price_view,state="QLD1")
 
         with tab3:
             st.header(f"VIC {price_view}")
-            display_dispatch_data(state="VIC1")
+            display_spot_price_view(price_view=price_view,state="VIC1")
 
         with tab4:
             st.header(f"SA {price_view}")
-            display_dispatch_data(state="SA1")
+            display_spot_price_view(price_view=price_view,state="SA1")
 
         with tab5:
             st.header(f"TAS {price_view}")
-            display_dispatch_data(state="TAS1")
+            display_spot_price_view(price_view=price_view,state="TAS1")
 
 
 
