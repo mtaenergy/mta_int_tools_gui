@@ -16,6 +16,15 @@ from modules.utils import *
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
 
+st.markdown("""
+        <style>
+               .block-container {
+                    padding-top: 0rem;
+                    padding-bottom: 0rem;
+                }
+        </style>
+        """, unsafe_allow_html=True)
+
 
 # update every 1 min
 refresh_count=0
@@ -41,23 +50,20 @@ def display_dispatch_data(state: str):
     #display state table and graph
     with st.empty():
         with st.container():
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.dataframe(dispatch_df)
 
-            with col2:
-                plot_df =dispatch_df.copy()
+            plot_df =dispatch_df.copy()
 
-                # Create line chart with Plotly
-                fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
-                                labels={
-                                    plot_df['SETTLEMENTDATE'].name:'Date',
-                                    plot_df['RRP'].name: 'RRP' 
-                                })
-        
-                #render fig
-                st.plotly_chart(fig, use_container_width=True)
+            # Create line chart with Plotly
+            fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
+                            labels={
+                                plot_df['SETTLEMENTDATE'].name:'Date',
+                                plot_df['RRP'].name: 'RRP' 
+                            })
+    
+            #render fig
+            st.plotly_chart(fig, use_container_width=True)
+
+            display_df_info(dispatch_df)
 
 
 def display_predispatch_30min_data(state: str):
@@ -65,28 +71,23 @@ def display_predispatch_30min_data(state: str):
     #get initial data
     predispatch_df=get_predispatch_data_30min(region_id=state)
 
-
-
     #display state table and graph
     with st.empty():
         with st.container():
-            col1, col2 = st.columns(2)
 
-            with col1:
-                st.dataframe(predispatch_df)
+            plot_df =predispatch_df.copy()
 
-            with col2:
-                plot_df =predispatch_df.copy()
+            # Create line chart with Plotly
+            fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
+                            labels={
+                                plot_df['PRED_DATETIME'].name:'Date',
+                                plot_df['RRP'].name: 'RRP' 
+                            })
+    
+            #render fig
+            st.plotly_chart(fig, use_container_width=True)
 
-                # Create line chart with Plotly
-                fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
-                                labels={
-                                    plot_df['PRED_DATETIME'].name:'Date',
-                                    plot_df['RRP'].name: 'RRP' 
-                                })
-        
-                #render fig
-                st.plotly_chart(fig, use_container_width=True)
+            display_df_info(predispatch_df)
 
 
 def display_predispatch_5min_data(state: str):
@@ -98,22 +99,66 @@ def display_predispatch_5min_data(state: str):
     #display state table and graph
     with st.empty():
         with st.container():
-            col1, col2 = st.columns(2)
-            with col1:
-                st.dataframe(predispatch_df)
 
-            with col2:
-                plot_df =predispatch_df.copy()
-
-                # Create line chart with Plotly
-                fig = px.line(plot_df, x=plot_df['INTERVAL_DATETIME'], y= plot_df['RRP'],
-                                labels={
-                                    plot_df['INTERVAL_DATETIME'].name:'Date',
-                                    plot_df['RRP'].name: 'RRP' 
-                                })
         
-                #render fig
-                st.plotly_chart(fig, use_container_width=True)
+            plot_df =predispatch_df.copy()
+
+            # Create line chart with Plotly
+            fig = px.line(plot_df, x=plot_df['INTERVAL_DATETIME'], y= plot_df['RRP'],
+                            labels={
+                                plot_df['INTERVAL_DATETIME'].name:'Date',
+                                plot_df['RRP'].name: 'RRP' 
+                            })
+    
+            #render fig
+            st.plotly_chart(fig, use_container_width=True)
+
+            display_df_info(predispatch_df)
+
+
+def display_df_info(df: pd.DataFrame) -> None:
+
+    #get latest rrp
+    latest_rrp = df.iloc[-1,:]['RRP']
+
+    #format as string
+    latest_rrp_str = "{:,.2f}".format(latest_rrp)
+
+    #get average rrp
+    mean_rrp = df['RRP'].mean()
+
+    #format as string
+    mean_rrp_str = "{:,.2f}".format(mean_rrp)
+
+    #get max rrp
+    max_rrp = df['RRP'].max()
+
+    #format as string
+    max_rrp_str = "{:,.2f}".format(max_rrp)
+
+    #get min rrp
+    min_rrp = df['RRP'].min()
+
+    #format as string
+    min_rrp_str = "{:,.2f}".format(min_rrp)
+
+    #display stats
+    with st.container():
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric('Latest RRP $: ', latest_rrp_str)
+
+        with col2:
+
+            st.metric('Mean RRP $: ', mean_rrp_str)
+
+        with col3:
+            st.metric('Max RRP $: ', max_rrp_str)
+
+        with col4:
+
+            st.metric('Min RRP $: ', min_rrp_str)
 
 
 def display_spot_price_view(price_view: str, state:str)->None:
@@ -173,7 +218,6 @@ def spot_price_page():
 
         if refresh_count % 1 == 0:
             st.cache_data.clear()
-            logging.info(f"Refresh Count: {refresh_count}")
             logging.info(f"Cache cleared")
 
         
