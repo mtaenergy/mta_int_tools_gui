@@ -552,7 +552,7 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
 
     return nmi_participants_df
 
-@st.cache_data
+
 def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch data for the market
 
@@ -576,7 +576,7 @@ def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
 
     return dispatch_df
 
-@st.cache_data
+
 def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 30min intervals
 

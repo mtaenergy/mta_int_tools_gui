@@ -28,7 +28,7 @@ st.markdown("""
 
 # update every 1 min
 refresh_count=0
-refresh_count=st_autorefresh(interval=60*1000, key="pricerefresh")
+refresh_count=st_autorefresh(interval=5*1000, key="pricerefresh")
 
 
 def update_spot_price_view_state(option:str)->None:
@@ -217,7 +217,7 @@ def spot_price_page():
 
 
         if refresh_count % 1 == 0:
-            st.cache_data.clear()
+            #st.cache_data.clear()
             logging.info(f"Cache cleared")
 
         
