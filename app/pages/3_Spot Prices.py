@@ -48,6 +48,7 @@ def display_dispatch_data(state: str):
 
             with col2:
                 plot_df =dispatch_df.copy()
+
                 # Create line chart with Plotly
                 fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
                                 labels={
@@ -64,56 +65,56 @@ def display_dispatch_data(state: str):
 def display_predispatch_30min_data(state: str):
 
     #get initial data
-    predispatch_df=get_predispatch_data_30min()
+    predispatch_df=get_predispatch_data_30min(region_id=state)
 
-    #query the database for the data
 
-    #display NSW table and graph
-    with container.container():
-        col1, col2 = st.columns(2)
-        st.header("NSW")
-        with col1:
-            st.dataframe(predispatch_df[predispatch_df['REGIONID']=='NSW1'])
 
-        with col2:
-            plot_df =predispatch_df[predispatch_df['REGIONID']=='NSW1'].copy()
+    #display state table and graph
+    with st.empty():
+        with st.container():
+            col1, col2 = st.columns(2)
 
-            # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
-                            labels={
-                                plot_df['PRED_DATETIME'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
-    
-            #render fig
-            st.plotly_chart(fig, use_container_width=True)
+            with col1:
+                st.dataframe(predispatch_df)
+
+            with col2:
+                plot_df =predispatch_df.copy()
+
+                # Create line chart with Plotly
+                fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
+                                labels={
+                                    plot_df['PRED_DATETIME'].name:'Date',
+                                    plot_df['RRP'].name: 'RRP' 
+                                })
+        
+                #render fig
+                st.plotly_chart(fig, use_container_width=True)
 
 def display_predispatch_5min_data(state: str):
 
     #get initial data
-    predispatch_df=get_predispatch_data_30min()
+    predispatch_df=get_predispatch_data_5min(region_id=state)
 
-    #query the database for the data
 
-    #display NSW table and graph
-    with container.container():
-        col1, col2 = st.columns(2)
-        st.header("NSW")
-        with col1:
-            st.dataframe(predispatch_df[predispatch_df['REGIONID']=='NSW1'])
+    #display state table and graph
+    with st.empty():
+        with st.container():
+            col1, col2 = st.columns(2)
+            with col1:
+                st.dataframe(predispatch_df)
 
-        with col2:
-            plot_df =predispatch_df[predispatch_df['REGIONID']=='NSW1'].copy()
+            with col2:
+                plot_df =predispatch_df.copy()
 
-            # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
-                            labels={
-                                plot_df['PRED_DATETIME'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
-    
-            #render fig
-            st.plotly_chart(fig, use_container_width=True)
+                # Create line chart with Plotly
+                fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
+                                labels={
+                                    plot_df['PRED_DATETIME'].name:'Date',
+                                    plot_df['RRP'].name: 'RRP' 
+                                })
+        
+                #render fig
+                st.plotly_chart(fig, use_container_width=True)
 
 def display_spot_price_view(price_view: str, state:str)->None:
     

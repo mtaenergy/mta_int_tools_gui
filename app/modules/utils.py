@@ -591,8 +591,8 @@ def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
     table_name="aemo_emms_predispatch_30min"
     query = (f"SELECT * FROM {table_name} "
              f"WHERE DATETIME = (SELECT MAX(DATETIME) FROM {table_name}) "
-             f"AND REGIONID = '{region_id}'"
-             )
+             f"AND REGIONID = '{region_id}' "
+             f"ORDER BY PRED_DATETIME asc")
     
     #get predispatch data
     predispatch_df=sql_con.query_sql(query=query,database='timeseries')
@@ -600,11 +600,11 @@ def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
     return predispatch_df
 
 
-def get_predispatch_data_5min(lookback_hours: int)-> pd.DataFrame:
+def get_predispatch_data_5min(region_id: str)-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 5min intervals
 
     Args:
-        lookback_hours (int): number of hours to lookback
+        region_id (str): region to get predispatch data for
 
     Returns:
         pd.DataFrame: dataframe of predispatch data
@@ -613,7 +613,9 @@ def get_predispatch_data_5min(lookback_hours: int)-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_predispatch_5min"
     query = (f"SELECT * FROM {table_name} "
-             f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})")
+             f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})"
+             f"AND REGIONID = '{region_id}' "
+             f"ORDER BY INTERVAL_DATETIME asc")
     
     #get predispatch data
     predispatch_df=sql_con.query_sql(query=query,database='timeseries')
