@@ -124,6 +124,59 @@ def display_predispatch_5min_data(state: str):
             display_df_info(predispatch_df)
 
 
+def display_full_data(state: str):
+    #get initial data
+    lookback_hours = 24
+    dispatch_df=get_dispatch_data(lookback_hours=lookback_hours, region_id=state)
+    predispatch30min_df=get_predispatch_data_30min(region_id=state)
+    predispatch5min_df=get_predispatch_data_5min(region_id=state)
+
+    #drop unneeded columns and rename columns to match
+    predispatch30min_df = predispatch30min_df.drop(columns=['TOTALDEMAND','AVAILABLEGENERATION'])
+    predispatch5min_df = predispatch5min_df.drop(columns=['TOTALDEMAND','AVAILABLEGENERATION','SS_SOLAR_UIGF','SS_WIND_UIGF'])
+    predispatch30min_df.rename(columns={'PRED_DATETIME':'SETTLEMENTDATE'}, inplace=True)
+    predispatch5min_df.rename(columns={'INTERVAL_DATETIME':'SETTLEMENTDATE'}, inplace=True)
+
+    #drop any rows in predispatch 30min that overlap with predispatch 5min
+    predispatch30min_df = predispatch30min_df[~predispatch30min_df['SETTLEMENTDATE'].isin(predispatch5min_df['SETTLEMENTDATE'])]
+
+    #concatenate dataframes based on rrp
+    full_df = pd.concat([dispatch_df,predispatch5min_df,predispatch30min_df], axis=0)
+    predispatch_df = pd.concat([predispatch5min_df,predispatch30min_df], axis=0)
+
+    #display state table and graph
+
+    with st.empty():
+        with st.container():
+
+            # st.header('dispatch')
+            # st.table(dispatch_df)
+            # st.header('predispatch 5 min')
+            # st.table(predispatch5min_df)
+            # st.header('predispatch 30 min')
+            # st.table(predispatch30min_df)
+            # st.table(full_df)
+
+            plot_df =full_df.copy()
+
+            # Create line chart with Plotly
+            fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
+                            labels={
+                                plot_df['SETTLEMENTDATE'].name:'Date',
+                                plot_df['RRP'].name: 'RRP' 
+                            })
+            
+            fig.add_scatter( x=dispatch_df['SETTLEMENTDATE'], y= dispatch_df['RRP'])
+    
+            #render fig
+            st.plotly_chart(fig, use_container_width=True)
+
+
+            st.subheader('Dispatch Metrics')
+            display_df_info(dispatch_df)
+            st.subheader('Pre-Dispatch Metrics')
+            display_df_info(predispatch_df)
+
 def display_df_info(df: pd.DataFrame) -> None:
 
     #get latest rrp
@@ -170,19 +223,21 @@ def display_df_info(df: pd.DataFrame) -> None:
 
 
 def display_spot_price_view(price_view: str, state:str)->None:
+
+    display_full_data(state=state)
     
-    #select the correct view
-    if price_view == "Dispatch":
-        display_dispatch_data(state=state)
+    # #select the correct view
+    # if price_view == "Dispatch":
+    #     display_dispatch_data(state=state)
 
-    elif price_view == "Pre-Dispatch 30 Min":
-        display_predispatch_30min_data(state=state)
+    # elif price_view == "Pre-Dispatch 30 Min":
+    #     display_predispatch_30min_data(state=state)
 
-    elif price_view == "Pre-Dispatch 5 Min":
-        display_predispatch_5min_data(state=state)
+    # elif price_view == "Pre-Dispatch 5 Min":
+    #     display_predispatch_5min_data(state=state)
 
-    else:
-        raise ValueError("Invalid option selected. Make sure the option selected is a valid option")
+    # else:
+    #     raise ValueError("Invalid option selected. Make sure the option selected is a valid option")
 
 
 def spot_price_page():
@@ -204,7 +259,7 @@ def spot_price_page():
 
 
         #display spot price view
-        st.header(f"{state} {price_view}")
+        st.header(f"{state} Spot Price")
         display_spot_price_view(price_view=price_view,state=f"{state}1")
 
         #display progress bar to show which state is currently being displayed

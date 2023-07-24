@@ -567,10 +567,10 @@ def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_dispatch_price"
     timezone_add = 10 #need to set to convert UTC to AEST
-    query = (f"SELECT * FROM {table_name} "
+    query = (f"SELECT SETTLEMENTDATE,REGIONID,RRP FROM {table_name} "
              f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
              f"AND REGIONID = '{region_id}' "
-             f"ORDER BY SETTLEMENTDATE desc")
+             f"ORDER BY SETTLEMENTDATE asc")
     
     #get dispatch data
     dispatch_df=sql_con.query_sql(query=query,database='timeseries')
@@ -594,7 +594,7 @@ def get_dispatch_demand_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     query = (f"SELECT * FROM {table_name} "
              f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
              f"AND REGIONID = '{region_id}' "
-             f"ORDER BY SETTLEMENTDATE desc")
+             f"ORDER BY SETTLEMENTDATE asc")
     
     #get dispatch data
     dispatch_df=sql_con.query_sql(query=query,database='timeseries')
@@ -614,7 +614,7 @@ def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
 
     #setup query
     table_name="aemo_emms_predispatch_30min"
-    query = (f"SELECT * FROM {table_name} "
+    query = (f"SELECT PRED_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION FROM {table_name} "
              f"WHERE DATETIME = (SELECT MAX(DATETIME) FROM {table_name}) "
              f"AND REGIONID = '{region_id}' "
              f"ORDER BY PRED_DATETIME asc")
@@ -637,7 +637,7 @@ def get_predispatch_data_5min(region_id: str)-> pd.DataFrame:
 
     #setup query
     table_name="aemo_emms_predispatch_5min"
-    query = (f"SELECT * FROM {table_name} "
+    query = (f"SELECT INTERVAL_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION,SS_SOLAR_UIGF,SS_WIND_UIGF FROM {table_name} "
              f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})"
              f"AND REGIONID = '{region_id}' "
              f"ORDER BY INTERVAL_DATETIME asc")
