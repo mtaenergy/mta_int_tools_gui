@@ -9,11 +9,16 @@ from PIL import Image
 import mtatk
 import time
 import asyncio
+from streamlit_autorefresh import st_autorefresh
 
 from modules.utils import *
 
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
+
+
+# update every 5 mins
+refresh_count=st_autorefresh(interval=5*1000, key="pricerefresh")
 
 
 def update_spot_price_view_state(option:str)->None:
@@ -26,71 +31,103 @@ def update_spot_price_view_state(option:str)->None:
         raise ValueError("Invalid option selected. Make sure the option selected is either dispatch or predispatch")
 
 
-async def display_dispatch_data():
+def display_dispatch_data():
 
     #get initial data
     lookback_hours = 24
     dispatch_df=get_dispatch_data(lookback_hours)
 
-    #query the database for the data
-    while True:
+    #setup empty container
+    dispatch_container = st.empty()
+
+    #display NSW table and graph
+    with dispatch_container.container():
+        col1, col2 = st.columns(2)
+        st.header("NSW")
+        with col1:
+            st.dataframe(dispatch_df[dispatch_df['REGIONID']=='NSW1'])
+
+        with col2:
+            plot_df =dispatch_df[dispatch_df['REGIONID']=='NSW1'].copy()
+            # Create line chart with Plotly
+            fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
+                            labels={
+                                plot_df['SETTLEMENTDATE'].name:'Date',
+                                plot_df['RRP'].name: 'RRP' 
+                            })
     
-        nsw_container = st.empty()
+            #render fig
+            st.plotly_chart(fig, use_container_width=True)
 
-        #display NSW table and graph
-        with nsw_container.container():
-            col1, col2 = st.columns(2)
-            st.header("NSW")
-            with col1:
-                st.dataframe(dispatch_df[dispatch_df['REGIONID']=='NSW1'])
 
-            with col2:
-                plot_df =dispatch_df[dispatch_df['REGIONID']=='NSW1'].copy()
-                # Create line chart with Plotly
-                fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
-                                labels={
-                                    plot_df['SETTLEMENTDATE'].name:'Date',
-                                    plot_df['RRP'].name: 'RRP' 
-                                })
+    #display QLD table and graph
+    with dispatch_container.container():
+        col1, col2 = st.columns(2)
+        st.header("NSW")
+        with col1:
+            st.dataframe(dispatch_df[dispatch_df['REGIONID']=='QLD1'])
+
+        with col2:
+            plot_df =dispatch_df[dispatch_df['REGIONID']=='QLD1'].copy()
+            # Create line chart with Plotly
+            fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
+                            labels={
+                                plot_df['SETTLEMENTDATE'].name:'Date',
+                                plot_df['RRP'].name: 'RRP' 
+                            })
+
+            #render fig
+            st.plotly_chart(fig, use_container_width=True)
+
+    #display VIC table and graph
+    with dispatch_container.container():
+        col1, col2 = st.columns(2)
+        st.header("NSW")
+        with col1:
+            st.dataframe(dispatch_df[dispatch_df['REGIONID']=='VIC1'])
+
+        with col2:
+            plot_df =dispatch_df[dispatch_df['REGIONID']=='VIC1'].copy()
+            # Create line chart with Plotly
+            fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
+                            labels={
+                                plot_df['SETTLEMENTDATE'].name:'Date',
+                                plot_df['RRP'].name: 'RRP' 
+                            })
+
+            #render fig
+            st.plotly_chart(fig, use_container_width=True)
+
         
-                #render fig
-                st.plotly_chart(fig, use_container_width=True)
 
-        r= await asyncio.sleep(60)
-        nsw_container.empty()
-
-async def display_predispatch_data():
+def display_predispatch_data(container: st.container):
 
     #get initial data
     predispatch_df=get_predispatch_data_30min()
 
     #query the database for the data
-    while True:
+
+    #display NSW table and graph
+    with container.container():
+        col1, col2 = st.columns(2)
+        st.header("NSW")
+        with col1:
+            st.dataframe(predispatch_df[predispatch_df['REGIONID']=='NSW1'])
+
+        with col2:
+            plot_df =predispatch_df[predispatch_df['REGIONID']=='NSW1'].copy()
+
+            # Create line chart with Plotly
+            fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
+                            labels={
+                                plot_df['PRED_DATETIME'].name:'Date',
+                                plot_df['RRP'].name: 'RRP' 
+                            })
     
-        nsw_container = st.empty()
+            #render fig
+            st.plotly_chart(fig, use_container_width=True)
 
-        #display NSW table and graph
-        with nsw_container.container():
-            col1, col2 = st.columns(2)
-            st.header("NSW")
-            with col1:
-                st.dataframe(predispatch_df[predispatch_df['REGIONID']=='NSW1'])
 
-            with col2:
-                plot_df =predispatch_df[predispatch_df['REGIONID']=='NSW1'].copy()
-
-                # Create line chart with Plotly
-                fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
-                                labels={
-                                    plot_df['PRED_DATETIME'].name:'Date',
-                                    plot_df['RRP'].name: 'RRP' 
-                                })
-        
-                #render fig
-                st.plotly_chart(fig, use_container_width=True)
-
-        r= await asyncio.sleep(60)
-        nsw_container.empty()
 
 def _display_state_table(df: pd.DataFrame)->None:
     pass
@@ -98,7 +135,7 @@ def _display_state_table(df: pd.DataFrame)->None:
 
 
 
-async def spot_price_page():
+def spot_price_page():
     if session_state.authentication_status:
         #configure sidebar to have user name
         st.sidebar.title(f"Welcome {st.session_state['name']}")
@@ -112,15 +149,31 @@ async def spot_price_page():
 
     tab1, tab2 = st.tabs(['Dispatch','Pre-Dispatch'])
 
+
+    
     with tab1:
         st.header("Dispatch Prices")
-        asyncio.create_task(display_dispatch_data())
+        display_dispatch_data()
+
 
     with tab2:
         st.header("Pre-Dispatch Prices")
-        asyncio.create_task(display_predispatch_data())
+        
+        nsw_container_pre = st.empty()
+        display_predispatch_data(nsw_container_pre)
+        
+
+    if refresh_count % 5 == 0:
+        st.cache_data.clear()
+        logging.info(f"Cache cleared")
+
+    logging.info(f"Refresh Count: {refresh_count}")
+
+
 
 
 
 setup_session_states()
-asyncio.run(spot_price_page())
+
+if __name__ == "__main__":
+    spot_price_page()

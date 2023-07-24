@@ -552,7 +552,7 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
 
     return nmi_participants_df
 
-
+@st.cache_data
 def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch data for the market
 
@@ -568,14 +568,14 @@ def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
     timezone_add = 10 #need to set to convert UTC to AEST
     query = (f"SELECT * FROM {table_name} "
              f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
-             f"ORDER BY SETTLEMENTDATE asc")
+             f"ORDER BY SETTLEMENTDATE desc")
     
     #get dispatch data
     dispatch_df=sql_con.query_sql(query=query,database='timeseries')
 
     return dispatch_df
 
-
+@st.cache_data
 def get_predispatch_data_30min()-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 30min intervals
 
