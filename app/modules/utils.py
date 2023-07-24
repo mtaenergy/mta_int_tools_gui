@@ -553,7 +553,7 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
     return nmi_participants_df
 
 @st.cache_data
-def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
+def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch data for the market
 
     Args:
@@ -568,6 +568,7 @@ def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
     timezone_add = 10 #need to set to convert UTC to AEST
     query = (f"SELECT * FROM {table_name} "
              f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
+             f"AND REGIONID = '{region_id}' "
              f"ORDER BY SETTLEMENTDATE desc")
     
     #get dispatch data
@@ -576,7 +577,7 @@ def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
     return dispatch_df
 
 @st.cache_data
-def get_predispatch_data_30min()-> pd.DataFrame:
+def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 30min intervals
 
     Args:
@@ -589,7 +590,9 @@ def get_predispatch_data_30min()-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_predispatch_30min"
     query = (f"SELECT * FROM {table_name} "
-             f"WHERE DATETIME = (SELECT MAX(DATETIME) FROM {table_name})")
+             f"WHERE DATETIME = (SELECT MAX(DATETIME) FROM {table_name}) "
+             f"AND REGIONID = '{region_id}'"
+             )
     
     #get predispatch data
     predispatch_df=sql_con.query_sql(query=query,database='timeseries')

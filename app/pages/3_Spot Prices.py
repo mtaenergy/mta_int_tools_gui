@@ -36,7 +36,7 @@ def display_dispatch_data(state: str):
 
     #get initial data
     lookback_hours = 24
-    dispatch_df=get_dispatch_data(lookback_hours)
+    dispatch_df=get_dispatch_data(lookback_hours=lookback_hours, region_id=state)
 
     #display state table and graph
     with st.empty():
@@ -44,10 +44,10 @@ def display_dispatch_data(state: str):
             col1, col2 = st.columns(2)
             
             with col1:
-                st.dataframe(dispatch_df[dispatch_df['REGIONID']==state])
+                st.dataframe(dispatch_df)
 
             with col2:
-                plot_df =dispatch_df[dispatch_df['REGIONID']==state].copy()
+                plot_df =dispatch_df.copy()
                 # Create line chart with Plotly
                 fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
                                 labels={
