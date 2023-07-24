@@ -102,8 +102,6 @@ def read_login_pem(file_path:str) -> tuple:
     #return lists
     return names_list,username_list, password_list
 
-
-
 def setup_authentication()-> tuple:
     """Summary of setup_authentication: Function to setup authentication for app
 
@@ -134,8 +132,6 @@ def setup_authentication()-> tuple:
 
     return authenticator, name
 
-
-
 def setup_session_states():
     """_summary_of_setup_session_states: Function to setup session states for app
     """
@@ -149,6 +145,9 @@ def setup_session_states():
 
     if 'name' not in session_state:
         session_state['name'] = ''
+
+    if 'spot_price_view' not in session_state:
+        session_state['spot_price_view'] = 'dispatch'
 
     #reset sub key if returned to dashboard
     #session_state.sub_key=False
@@ -171,6 +170,7 @@ def setup_colour_themes()-> dict:
     customer_colour_map = {group: colours[group] for group in colours}
 
     return customer_colour_map
+
 '''
 GET FUNCTIONS TO SQL DB
 '''
@@ -553,6 +553,76 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
     return nmi_participants_df
 
 
+def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
+    """Summary of get_dispatch_data: Function to get the most recent dispatch data for the market
+
+    Args:
+        lookback_hours (int): number of hours to lookback
+
+    Returns:
+        pd.DataFrame: dataframe of dispatch data
+    """
+
+    #setup query
+    table_name="aemo_emms_dispatch_price"
+    timezone_add = 10 #need to set to convert UTC to AEST
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
+             f"AND REGIONID = '{region_id}' "
+             f"ORDER BY SETTLEMENTDATE desc")
+    
+    #get dispatch data
+    dispatch_df=sql_con.query_sql(query=query,database='timeseries')
+
+    return dispatch_df
+
+
+def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
+    """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 30min intervals
+
+    Args:
+        lookback_hours (int): number of hours to lookback
+
+    Returns:
+        pd.DataFrame: dataframe of predispatch data
+    """
+
+    #setup query
+    table_name="aemo_emms_predispatch_30min"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE DATETIME = (SELECT MAX(DATETIME) FROM {table_name}) "
+             f"AND REGIONID = '{region_id}' "
+             f"ORDER BY PRED_DATETIME asc")
+    
+    #get predispatch data
+    predispatch_df=sql_con.query_sql(query=query,database='timeseries')
+
+    return predispatch_df
+
+
+def get_predispatch_data_5min(region_id: str)-> pd.DataFrame:
+    """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 5min intervals
+
+    Args:
+        region_id (str): region to get predispatch data for
+
+    Returns:
+        pd.DataFrame: dataframe of predispatch data
+    """
+
+    #setup query
+    table_name="aemo_emms_predispatch_5min"
+    query = (f"SELECT * FROM {table_name} "
+             f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})"
+             f"AND REGIONID = '{region_id}' "
+             f"ORDER BY INTERVAL_DATETIME asc")
+    
+    #get predispatch data
+    predispatch_df=sql_con.query_sql(query=query,database='timeseries')
+
+    return predispatch_df
+
+
 ## SITE ALIAS FUNCTIONS
 
 @st.cache_data
@@ -674,15 +744,11 @@ def get_site_id(nmi: str)->str:
     
 
 ## PUSH FUNCTIONS
-
 def clear_flag():
     """_summary_: Function to clear the flag for the push button
     """
     session_state.sub_key=False
     
-
-
-
 @st.cache_data
 def convert_df(df: pd.DataFrame)->bytes:
     """_summary_: Function to convert a dataframe to a csv file

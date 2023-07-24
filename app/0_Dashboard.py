@@ -115,7 +115,7 @@ def home_page():
             with col4:
 
                 #filter for only rows with Carbon as charge name
-                carbon_df = billing_df.loc[billing_df['charge_name']=='Carbon']
+                carbon_df = billing_df[billing_df['charge_name']=='Carbon'].copy()
 
                 #create new column which is the multiplication of volume, loss factor and scaling factor
                 carbon_df['carbon_ton'] = carbon_df['volume']*carbon_df['scaling_factor']*carbon_df['loss_factor']/1000
