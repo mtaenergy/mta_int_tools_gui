@@ -7,8 +7,6 @@ import plotly.express as px
 from streamlit import session_state
 from PIL import Image
 import mtatk
-import time
-import asyncio
 from streamlit_autorefresh import st_autorefresh
 
 from modules.utils import *
