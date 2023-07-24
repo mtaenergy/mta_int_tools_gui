@@ -64,11 +64,17 @@ def display_predispatch_30min_data(state: str):
             plot_df =predispatch_df.copy()
 
             # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
+            fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['TOTALDEMAND'],
                             labels={
                                 plot_df['PRED_DATETIME'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
+                                plot_df['TOTALDEMAND'].name: 'Total Demand (kWh)',
+                                'color': 'Legend'
+
+                            },
+                            color=px.Constant("Total Demand (kWh)"))
+            
+            #add bar chart for generation
+            fig.add_bar(x=plot_df['PRED_DATETIME'], y=plot_df['AVAILABLEGENERATION'], name='Available Generation (kWh)')
     
             #render fig
             st.plotly_chart(fig, use_container_width=True)
@@ -86,15 +92,20 @@ def display_predispatch_5min_data(state: str):
     with st.empty():
         with st.container():
 
-        
             plot_df =predispatch_df.copy()
 
             # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['INTERVAL_DATETIME'], y= plot_df['RRP'],
+            fig = px.line(plot_df, x=plot_df['INTERVAL_DATETIME'], y= plot_df['TOTALDEMAND'],
                             labels={
                                 plot_df['INTERVAL_DATETIME'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
+                                plot_df['TOTALDEMAND'].name: 'Total Demand (kWh)',
+                                'color': 'Legend'
+
+                            },
+                            color=px.Constant("Total Demand (kWh)"))
+            
+            #add bar chart for generation
+            fig.add_bar(x=plot_df['INTERVAL_DATETIME'], y=plot_df['AVAILABLEGENERATION'], name='Available Generation (kWh)')
     
             #render fig
             st.plotly_chart(fig, use_container_width=True)
