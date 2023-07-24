@@ -18,6 +18,7 @@ img_path = "app/imgs/400dpiLogo.jpg"
 
 
 # update every 5 mins
+refresh_count=0
 refresh_count=st_autorefresh(interval=5*1000, key="pricerefresh")
 
 
@@ -37,68 +38,73 @@ def display_dispatch_data():
     lookback_hours = 24
     dispatch_df=get_dispatch_data(lookback_hours)
 
-    #setup empty container
-    dispatch_container = st.empty()
+
 
     #display NSW table and graph
-    with dispatch_container.container():
-        col1, col2 = st.columns(2)
-        st.header("NSW")
-        with col1:
-            st.dataframe(dispatch_df[dispatch_df['REGIONID']=='NSW1'])
+    with st.empty():
+        with st.container():
+            st.header("NSW")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.dataframe(dispatch_df[dispatch_df['REGIONID']=='NSW1'])
 
-        with col2:
-            plot_df =dispatch_df[dispatch_df['REGIONID']=='NSW1'].copy()
-            # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
-                            labels={
-                                plot_df['SETTLEMENTDATE'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
-    
-            #render fig
-            st.plotly_chart(fig, use_container_width=True)
+            with col2:
+                plot_df =dispatch_df[dispatch_df['REGIONID']=='NSW1'].copy()
+                # Create line chart with Plotly
+                fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
+                                labels={
+                                    plot_df['SETTLEMENTDATE'].name:'Date',
+                                    plot_df['RRP'].name: 'RRP' 
+                                })
+        
+                #render fig
+                st.plotly_chart(fig, use_container_width=True)
 
 
     #display QLD table and graph
-    with dispatch_container.container():
-        col1, col2 = st.columns(2)
-        st.header("NSW")
-        with col1:
-            st.dataframe(dispatch_df[dispatch_df['REGIONID']=='QLD1'])
+    with st.empty():
+        with st.container():
+            st.header("QLD")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.dataframe(dispatch_df[dispatch_df['REGIONID']=='QLD1'])
 
-        with col2:
-            plot_df =dispatch_df[dispatch_df['REGIONID']=='QLD1'].copy()
-            # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
-                            labels={
-                                plot_df['SETTLEMENTDATE'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
+            with col2:
+                plot_df =dispatch_df[dispatch_df['REGIONID']=='QLD1'].copy()
+                # Create line chart with Plotly
+                fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
+                                labels={
+                                    plot_df['SETTLEMENTDATE'].name:'Date',
+                                    plot_df['RRP'].name: 'RRP' 
+                                })
 
-            #render fig
-            st.plotly_chart(fig, use_container_width=True)
+                #render fig
+                st.plotly_chart(fig, use_container_width=True)
 
     #display VIC table and graph
-    with dispatch_container.container():
-        col1, col2 = st.columns(2)
-        st.header("NSW")
-        with col1:
-            st.dataframe(dispatch_df[dispatch_df['REGIONID']=='VIC1'])
+    with st.empty():
+        with st.container():
+            st.header("VIC")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.dataframe(dispatch_df[dispatch_df['REGIONID']=='VIC1'])
 
-        with col2:
-            plot_df =dispatch_df[dispatch_df['REGIONID']=='VIC1'].copy()
-            # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
-                            labels={
-                                plot_df['SETTLEMENTDATE'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
+            with col2:
+                plot_df =dispatch_df[dispatch_df['REGIONID']=='VIC1'].copy()
+                # Create line chart with Plotly
+                fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
+                                labels={
+                                    plot_df['SETTLEMENTDATE'].name:'Date',
+                                    plot_df['RRP'].name: 'RRP' 
+                                })
 
-            #render fig
-            st.plotly_chart(fig, use_container_width=True)
+                #render fig
+                st.plotly_chart(fig, use_container_width=True)
 
-        
+            
 
 def display_predispatch_data(container: st.container):
 
@@ -141,12 +147,6 @@ def spot_price_page():
         st.sidebar.title(f"Welcome {st.session_state['name']}")
 
 
-    #container to select either dispatch or predispatch
-    with st.container():
-        st.button("Dispatch", use_container_width=True,on_click=update_spot_price_view_state("dispatch"))
-        st.button("Pre-Dispatch", use_container_width=True,on_click=update_spot_price_view_state("predispatch"))
-
-
     tab1, tab2 = st.tabs(['Dispatch','Pre-Dispatch'])
 
 
@@ -156,11 +156,11 @@ def spot_price_page():
         display_dispatch_data()
 
 
-    with tab2:
-        st.header("Pre-Dispatch Prices")
+    # with tab2:
+    #     st.header("Pre-Dispatch Prices")
         
-        nsw_container_pre = st.empty()
-        display_predispatch_data(nsw_container_pre)
+    #     nsw_container_pre = st.empty()
+    #     display_predispatch_data(nsw_container_pre)
         
 
     if refresh_count % 5 == 0:
