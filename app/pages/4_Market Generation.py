@@ -22,6 +22,11 @@ st.markdown("""
         </style>
         """, unsafe_allow_html=True)
 
+
+# update every 1 min
+refresh_count=0
+refresh_count=st_autorefresh(interval=60*1000, key="generationrefresh")
+
 def display_dispatch_data(state: str):
 
     #get initial data
