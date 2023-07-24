@@ -146,8 +146,9 @@ def setup_session_states():
     if 'name' not in session_state:
         session_state['name'] = ''
 
-    if 'spot_price_view' not in session_state:
-        session_state['spot_price_view'] = 'dispatch'
+    if 'live_state' not in session_state:
+        session_state['live_state'] = 0
+
 
     #reset sub key if returned to dashboard
     #session_state.sub_key=False
