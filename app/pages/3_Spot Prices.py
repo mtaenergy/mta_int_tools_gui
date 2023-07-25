@@ -39,92 +39,7 @@ states_progress_bar={
 }
 
 
-def update_spot_price_view_state(option:str)->None:
-    """
-    Function to update the session state for the spot price page
-    """
-    if option == "dispatch" or option == "predispatch":
-        session_state.spot_price_view = option
-    else:
-        raise ValueError("Invalid option selected. Make sure the option selected is either dispatch or predispatch")
-
-
-def display_dispatch_data(state: str):
-
-    #get initial data
-    lookback_hours = 24
-    dispatch_df=get_dispatch_data(lookback_hours=lookback_hours, region_id=state)
-
-    #display state table and graph
-    with st.empty():
-        with st.container():
-
-            plot_df =dispatch_df.copy()
-
-            # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
-                            labels={
-                                plot_df['SETTLEMENTDATE'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
-    
-            #render fig
-            st.plotly_chart(fig, use_container_width=True)
-
-            display_df_info(dispatch_df)
-
-
-def display_predispatch_30min_data(state: str):
-
-    #get initial data
-    predispatch_df=get_predispatch_data_30min(region_id=state)
-
-    #display state table and graph
-    with st.empty():
-        with st.container():
-
-            plot_df =predispatch_df.copy()
-
-            # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['RRP'],
-                            labels={
-                                plot_df['PRED_DATETIME'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
-    
-            #render fig
-            st.plotly_chart(fig, use_container_width=True)
-
-            display_df_info(predispatch_df)
-
-
-def display_predispatch_5min_data(state: str):
-
-    #get initial data
-    predispatch_df=get_predispatch_data_5min(region_id=state)
-
-
-    #display state table and graph
-    with st.empty():
-        with st.container():
-
-        
-            plot_df =predispatch_df.copy()
-
-            # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['INTERVAL_DATETIME'], y= plot_df['RRP'],
-                            labels={
-                                plot_df['INTERVAL_DATETIME'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
-    
-            #render fig
-            st.plotly_chart(fig, use_container_width=True)
-
-            display_df_info(predispatch_df)
-
-
-def display_full_data(state: str):
+def display_spot_price_view(state: str):
     #get initial data
     lookback_hours = 24
     dispatch_df=get_dispatch_data(lookback_hours=lookback_hours, region_id=state)
@@ -236,25 +151,6 @@ def display_df_info(df: pd.DataFrame,option: str) -> None:
         with col4:
 
             st.metric('Min RRP $: ', min_rrp_str)
-
-
-def display_spot_price_view(state:str)->None:
-
-    display_full_data(state=state)
-    
-    # #select the correct view
-    # if price_view == "Dispatch":
-    #     display_dispatch_data(state=state)
-
-    # elif price_view == "Pre-Dispatch 30 Min":
-    #     display_predispatch_30min_data(state=state)
-
-    # elif price_view == "Pre-Dispatch 5 Min":
-    #     display_predispatch_5min_data(state=state)
-
-    # else:
-    #     raise ValueError("Invalid option selected. Make sure the option selected is a valid option")
-
 
 def spot_price_page():
     if session_state.authentication_status:
