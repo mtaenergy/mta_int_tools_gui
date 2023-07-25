@@ -591,7 +591,7 @@ def get_dispatch_demand_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_dispatch_demand"
     timezone_add = 10 #need to set to convert UTC to AEST
-    query = (f"SELECT * FROM {table_name} "
+    query = (f"SELECT SETTLEMENTDATE,REGIONID,TOTALDEMAND,AVAILABLEGENERATION FROM {table_name} "
              f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
              f"AND REGIONID = '{region_id}' "
              f"ORDER BY SETTLEMENTDATE asc")
