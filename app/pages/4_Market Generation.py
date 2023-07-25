@@ -25,7 +25,7 @@ st.markdown("""
 
 # update every 1 min
 refresh_count=0
-refresh_count=st_autorefresh(interval=5*1000, key="generationrefresh")
+refresh_count=st_autorefresh(interval=20*1000, key="generationrefresh")
 
 states_list=['NSW', 'QLD', 'VIC', 'SA', 'TAS']
 states_progress_bar={
