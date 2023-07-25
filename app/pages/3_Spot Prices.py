@@ -27,7 +27,7 @@ st.markdown("""
 
 # update every 20 seconds
 refresh_count=0
-refresh_count=st_autorefresh(interval=5*1000, key="pricerefresh")
+refresh_count=st_autorefresh(interval=20*1000, key="pricerefresh")
 
 states_list=['NSW', 'QLD', 'VIC', 'SA', 'TAS']
 states_progress_bar={
@@ -144,18 +144,15 @@ def display_full_data(state: str):
     full_df = pd.concat([dispatch_df,predispatch5min_df,predispatch30min_df], axis=0)
     predispatch_df = pd.concat([predispatch5min_df,predispatch30min_df], axis=0)
 
-    #display state table and graph
+    #chop off last row of predispatch df
+    predispatch_df=predispatch_df.tail(-1)
 
+    #drop duplicates in full df and reset index
+    full_df = full_df.drop_duplicates(subset=['SETTLEMENTDATE']).reset_index(drop=True)
+
+    #display state table and graph
     with st.empty():
         with st.container():
-
-            # st.header('dispatch')
-            # st.table(dispatch_df)
-            # st.header('predispatch 5 min')
-            # st.table(predispatch5min_df)
-            # st.header('predispatch 30 min')
-            # st.table(predispatch30min_df)
-            # st.table(full_df)
 
             plot_df =full_df.copy()
 
@@ -163,27 +160,41 @@ def display_full_data(state: str):
             fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
                             labels={
                                 plot_df['SETTLEMENTDATE'].name:'Date',
-                                plot_df['RRP'].name: 'RRP' 
-                            })
+                                plot_df['RRP'].name: 'RRP',
+                                'color': 'Legend' 
+                            },
+                            color=px.Constant("Pre-Dispatch"),
+                            color_discrete_sequence=["#35ABDE"])
             
-            fig.add_scatter( x=dispatch_df['SETTLEMENTDATE'], y= dispatch_df['RRP'])
+            
+            fig.add_scatter( x=dispatch_df['SETTLEMENTDATE'], y= dispatch_df['RRP'],name='Dispatch')
+
+            #set line color for dispatch
+            fig['data'][1]['line']['color']="#085A9D"
+            
     
             #render fig
             st.plotly_chart(fig, use_container_width=True)
 
 
             st.subheader('Dispatch Metrics')
-            display_df_info(dispatch_df)
+            display_df_info(dispatch_df,option='dispatch')
             st.subheader('Pre-Dispatch Metrics')
-            display_df_info(predispatch_df)
+            display_df_info(predispatch_df,option='predispatch')
 
-def display_df_info(df: pd.DataFrame) -> None:
+def display_df_info(df: pd.DataFrame,option: str) -> None:
 
     #get latest rrp
-    latest_rrp = df.iloc[0,:]['RRP']
+    latest_rrp = df.iloc[-1,:]['RRP']
 
     #format as string
     latest_rrp_str = "{:,.2f}".format(latest_rrp)
+
+    #get next rrp for predispatch
+    next_rrp = df.iloc[0,:]['RRP']
+
+    #format as string
+    next_rrp_str = "{:,.2f}".format(next_rrp)
 
     #get average rrp
     mean_rrp = df['RRP'].mean()
@@ -208,7 +219,12 @@ def display_df_info(df: pd.DataFrame) -> None:
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric('Latest RRP $: ', latest_rrp_str)
+            if option =='dispatch':
+                st.metric('Latest RRP $: ', latest_rrp_str)
+            elif option =='predispatch':
+                st.metric('Next RRP $: ', next_rrp_str)
+            else:
+                raise ValueError("Invalid option selected. Make sure the option selected is either dispatch or predispatch")
 
         with col2:
 
@@ -222,7 +238,7 @@ def display_df_info(df: pd.DataFrame) -> None:
             st.metric('Min RRP $: ', min_rrp_str)
 
 
-def display_spot_price_view(price_view: str, state:str)->None:
+def display_spot_price_view(state:str)->None:
 
     display_full_data(state=state)
     
@@ -252,7 +268,6 @@ def spot_price_page():
 
         #configure sidebar to have user name
         st.sidebar.title(f"Welcome {st.session_state['name']}")
-        price_view = st.sidebar.radio("Select a price view option", ("Dispatch", "Pre-Dispatch 30 Min", "Pre-Dispatch 5 Min"))
 
         #set current state in view
         state = states_list[session_state.live_state]
@@ -260,7 +275,7 @@ def spot_price_page():
 
         #display spot price view
         st.header(f"{state} Spot Price")
-        display_spot_price_view(price_view=price_view,state=f"{state}1")
+        display_spot_price_view(state=f"{state}1")
 
         #display progress bar to show which state is currently being displayed
         st.progress(states_progress_bar[state])

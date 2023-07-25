@@ -71,14 +71,14 @@ def display_predispatch_30min_data(state: str):
             fig = px.line(plot_df, x=plot_df['PRED_DATETIME'], y= plot_df['TOTALDEMAND'],
                             labels={
                                 plot_df['PRED_DATETIME'].name:'Date',
-                                plot_df['TOTALDEMAND'].name: 'Total Demand (kWh)',
+                                plot_df['TOTALDEMAND'].name: 'Total Demand (MWh)',
                                 'color': 'Legend'
 
                             },
-                            color=px.Constant("Total Demand (kWh)"))
+                            color=px.Constant("Total Demand (MWh)"))
             
             #add bar chart for generation
-            fig.add_bar(x=plot_df['PRED_DATETIME'], y=plot_df['AVAILABLEGENERATION'], name='Available Generation (kWh)')
+            fig.add_bar(x=plot_df['PRED_DATETIME'], y=plot_df['AVAILABLEGENERATION'], name='Available Generation (MWh)')
     
             #render fig
             st.plotly_chart(fig, use_container_width=True)
