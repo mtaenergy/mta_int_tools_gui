@@ -8,7 +8,6 @@ from streamlit import session_state
 from PIL import Image
 import mtatk
 from streamlit_autorefresh import st_autorefresh
-from itertools import cycle, islice 
 
 from modules.utils import *
 
