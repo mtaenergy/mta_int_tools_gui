@@ -22,6 +22,9 @@ update_options=['Select option to update', 'Update NMI Details']
 global_nmi_list =['Select a NMI']
 global_nmi_list=global_nmi_list+get_nmi_list()
 
+#clear flag to display NMI details
+session_state.display_details=False
+
 # Page : Update Data
 
 def update_nmi_sd():

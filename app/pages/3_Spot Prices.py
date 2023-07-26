@@ -23,6 +23,9 @@ st.markdown("""
         </style>
         """, unsafe_allow_html=True)
 
+#clear flag to display NMI details
+session_state.display_details=False
+
 
 # update every 20 seconds
 refresh_count=0

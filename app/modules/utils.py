@@ -149,6 +149,9 @@ def setup_session_states():
     if 'live_state' not in session_state:
         session_state['live_state'] = 0
 
+    if 'display_details' not in session_state:
+        session_state['display_details'] = False
+
 
     #reset sub key if returned to dashboard
     #session_state.sub_key=False
@@ -773,6 +776,11 @@ def clear_flag():
     """_summary_: Function to clear the flag for the push button
     """
     session_state.sub_key=False
+
+def set_flag():
+    """_summary_: Function to clear the flag for the push button
+    """
+    session_state.display_details=True
     
 @st.cache_data
 def convert_df(df: pd.DataFrame)->bytes:
@@ -785,7 +793,7 @@ def convert_df(df: pd.DataFrame)->bytes:
         bytes: csv file
     """
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
-    return df.to_csv().encode('utf-8')
+    return df.to_csv(encoding='utf-8').encode('utf-8')
 
 @st.cache_resource
 def startup_site():

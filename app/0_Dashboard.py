@@ -24,6 +24,10 @@ img_path = "app/imgs/400dpiLogo.jpg"
 client_list = ['Select a customer','Best and Less Pty Ltd','TJX Australia Pty Ltd']
 
 
+#clear flag to display NMI details
+session_state.display_details=False
+
+
 #setup function for home page
 def home_page():
 
