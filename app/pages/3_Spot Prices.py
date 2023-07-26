@@ -29,7 +29,7 @@ session_state.display_details=False
 
 # update every 20 seconds
 refresh_count=0
-refresh_count=st_autorefresh(interval=20*1000, key="pricerefresh")
+refresh_count=st_autorefresh(interval=60*1000, key="pricerefresh")
 
 states_list=['NSW', 'QLD', 'VIC', 'SA', 'TAS']
 states_progress_bar={
@@ -44,9 +44,10 @@ states_progress_bar={
 def display_spot_price_view(state: str):
     #get initial data
     lookback_hours = 24
-    dispatch_df=get_dispatch_data(lookback_hours=lookback_hours, region_id=state)
-    predispatch30min_df=get_predispatch_data_30min(region_id=state)
-    predispatch5min_df=get_predispatch_data_5min(region_id=state)
+    dispatch_df=get_dispatch_data(lookback_hours=lookback_hours)
+    predispatch30min_df=get_predispatch_data_30min()
+    predispatch5min_df=get_predispatch_data_5min()
+
 
     #drop unneeded columns and rename columns to match
     predispatch30min_df = predispatch30min_df.drop(columns=['TOTALDEMAND','AVAILABLEGENERATION'])
@@ -65,13 +66,13 @@ def display_spot_price_view(state: str):
     predispatch_df=predispatch_df.tail(-1)
 
     #drop duplicates in full df and reset index
-    full_df = full_df.drop_duplicates(subset=['SETTLEMENTDATE']).reset_index(drop=True)
+    full_df = full_df.drop_duplicates(subset=['SETTLEMENTDATE','REGIONID']).reset_index(drop=True)
 
     #display state table and graph
     with st.empty():
         with st.container():
 
-            plot_df =full_df.copy()
+            plot_df =full_df.loc[full_df['REGIONID']==state].copy()
 
             # Create line chart with Plotly
             fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['RRP'],
@@ -84,7 +85,7 @@ def display_spot_price_view(state: str):
                             color_discrete_sequence=["#35ABDE"])
             
             
-            fig.add_scatter( x=dispatch_df['SETTLEMENTDATE'], y= dispatch_df['RRP'],name='Dispatch')
+            fig.add_scatter( x=dispatch_df.loc[dispatch_df['REGIONID']==state]['SETTLEMENTDATE'], y= dispatch_df.loc[dispatch_df['REGIONID']==state]['RRP'],name='Dispatch')
 
             #set line color for dispatch
             fig['data'][1]['line']['color']="#085A9D"
@@ -93,66 +94,75 @@ def display_spot_price_view(state: str):
             #render fig
             st.plotly_chart(fig, use_container_width=True)
 
+            st.table(dispatch_df)
+
 
             st.subheader('Dispatch Metrics')
             display_df_info(dispatch_df,option='dispatch')
-            st.subheader('Pre-Dispatch Metrics')
-            display_df_info(predispatch_df,option='predispatch')
+            # st.subheader('Pre-Dispatch Metrics')
+            # display_df_info(predispatch_df,option='predispatch')
 
 def display_df_info(df: pd.DataFrame,option: str) -> None:
 
-    #get latest rrp
-    latest_rrp = df.iloc[-1,:]['RRP']
+    #format table to display metrics
+    latest_rrp = df.loc[df['SETTLEMENTDATE']==df['SETTLEMENTDATE'].max()]['RRP']
 
-    #format as string
-    latest_rrp_str = "{:,.2f}".format(latest_rrp)
+    st.table(latest_rrp)
 
-    #get next rrp for predispatch
-    next_rrp = df.iloc[0,:]['RRP']
 
-    #format as string
-    next_rrp_str = "{:,.2f}".format(next_rrp)
 
-    #get average rrp
-    mean_rrp = df['RRP'].mean()
+    # #get latest rrp
+    # latest_rrp = df.iloc[-1,:]['RRP']
 
-    #format as string
-    mean_rrp_str = "{:,.2f}".format(mean_rrp)
+    # #format as string
+    # latest_rrp_str = "{:,.2f}".format(latest_rrp)
 
-    #get max rrp
-    max_rrp = df['RRP'].max()
+    # #get next rrp for predispatch
+    # next_rrp = df.iloc[0,:]['RRP']
 
-    #format as string
-    max_rrp_str = "{:,.2f}".format(max_rrp)
+    # #format as string
+    # next_rrp_str = "{:,.2f}".format(next_rrp)
 
-    #get min rrp
-    min_rrp = df['RRP'].min()
+    # #get average rrp
+    # mean_rrp = df['RRP'].mean()
 
-    #format as string
-    min_rrp_str = "{:,.2f}".format(min_rrp)
+    # #format as string
+    # mean_rrp_str = "{:,.2f}".format(mean_rrp)
 
-    #display stats
-    with st.container():
-        col1, col2, col3, col4 = st.columns(4)
+    # #get max rrp
+    # max_rrp = df['RRP'].max()
 
-        with col1:
-            if option =='dispatch':
-                st.metric('Latest RRP $: ', latest_rrp_str)
-            elif option =='predispatch':
-                st.metric('Next RRP $: ', next_rrp_str)
-            else:
-                raise ValueError("Invalid option selected. Make sure the option selected is either dispatch or predispatch")
+    # #format as string
+    # max_rrp_str = "{:,.2f}".format(max_rrp)
 
-        with col2:
+    # #get min rrp
+    # min_rrp = df['RRP'].min()
 
-            st.metric('Mean RRP $: ', mean_rrp_str)
+    # #format as string
+    # min_rrp_str = "{:,.2f}".format(min_rrp)
 
-        with col3:
-            st.metric('Max RRP $: ', max_rrp_str)
+    # #display stats
+    # with st.container():
+    #     col1, col2, col3, col4 = st.columns(4)
 
-        with col4:
+    #     with col1:
+    #         if option =='dispatch':
+    #             st.metric('Latest RRP $: ', latest_rrp_str)
+    #         elif option =='predispatch':
+    #             st.metric('Next RRP $: ', next_rrp_str)
+    #         else:
+    #             raise ValueError("Invalid option selected. Make sure the option selected is either dispatch or predispatch")
 
-            st.metric('Min RRP $: ', min_rrp_str)
+    #     with col2:
+
+    #         st.metric('Mean RRP $: ', mean_rrp_str)
+
+    #     with col3:
+    #         st.metric('Max RRP $: ', max_rrp_str)
+
+    #     with col4:
+
+    #         st.metric('Min RRP $: ', min_rrp_str)
 
 def spot_price_page():
     if session_state.authentication_status:

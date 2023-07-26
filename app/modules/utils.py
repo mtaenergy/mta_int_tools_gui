@@ -557,7 +557,7 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
     return nmi_participants_df
 
 
-def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
+def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch pricedata for the market
 
     Args:
@@ -572,7 +572,6 @@ def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     timezone_add = 10 #need to set to convert UTC to AEST
     query = (f"SELECT SETTLEMENTDATE,REGIONID,RRP FROM {table_name} "
              f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
-             f"AND REGIONID = '{region_id}' "
              f"ORDER BY SETTLEMENTDATE asc")
     
     #get dispatch data
@@ -580,12 +579,11 @@ def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
 
     return dispatch_df
 
-def get_dispatch_demand_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
+def get_dispatch_demand_data(lookback_hours: int)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch demand data for the market
 
     Args:
         lookback_hours (int): number of hours to lookback
-        region_id (str): region to get dispatch data for
 
     Returns:
         pd.DataFrame: dataframe of dispatch data
@@ -596,7 +594,6 @@ def get_dispatch_demand_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     timezone_add = 10 #need to set to convert UTC to AEST
     query = (f"SELECT SETTLEMENTDATE,REGIONID,TOTALDEMAND,AVAILABLEGENERATION FROM {table_name} "
              f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
-             f"AND REGIONID = '{region_id}' "
              f"ORDER BY SETTLEMENTDATE asc")
     
     #get dispatch data
@@ -605,11 +602,8 @@ def get_dispatch_demand_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     return dispatch_df
 
 
-def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
+def get_predispatch_data_30min()-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 30min intervals
-
-    Args:
-        lookback_hours (int): number of hours to lookback
 
     Returns:
         pd.DataFrame: dataframe of predispatch data
@@ -619,7 +613,6 @@ def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
     table_name="aemo_emms_predispatch_30min"
     query = (f"SELECT PRED_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION FROM {table_name} "
              f"WHERE DATETIME = (SELECT MAX(DATETIME) FROM {table_name}) "
-             f"AND REGIONID = '{region_id}' "
              f"ORDER BY PRED_DATETIME asc")
     
     #get predispatch data
@@ -628,11 +621,8 @@ def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
     return predispatch_df
 
 
-def get_predispatch_data_5min(region_id: str)-> pd.DataFrame:
+def get_predispatch_data_5min()-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 5min intervals
-
-    Args:
-        region_id (str): region to get predispatch data for
 
     Returns:
         pd.DataFrame: dataframe of predispatch data
@@ -642,7 +632,6 @@ def get_predispatch_data_5min(region_id: str)-> pd.DataFrame:
     table_name="aemo_emms_predispatch_5min"
     query = (f"SELECT INTERVAL_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION,SS_SOLAR_UIGF,SS_WIND_UIGF FROM {table_name} "
              f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})"
-             f"AND REGIONID = '{region_id}' "
              f"ORDER BY INTERVAL_DATETIME asc")
     
     #get predispatch data
