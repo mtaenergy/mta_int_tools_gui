@@ -75,18 +75,18 @@ def display_gen_data(state: str):
             fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['TOTALDEMAND'],
                             labels={
                                 plot_df['SETTLEMENTDATE'].name:'Date',
-                                plot_df['TOTALDEMAND'].name: 'Total Demand (MWh)',
+                                plot_df['TOTALDEMAND'].name: 'Total Demand (MW)',
                                 'color': 'Legend'
 
                             },
-                            color=px.Constant("Total Demand (MWh)"),
+                            color=px.Constant("Total Demand (MW)"),
                             color_discrete_sequence=["#8FCEA1"])
             
             #add bar chart for generation
-            fig.add_bar(x=predispatch_df['SETTLEMENTDATE'], y=predispatch_df['AVAILABLEGENERATION'], name='Pre-Dispatch - Available Generation (MWh)', marker_color='#35ABDE')
+            fig.add_bar(x=predispatch_df['SETTLEMENTDATE'], y=predispatch_df['AVAILABLEGENERATION'], name='Pre-Dispatch - Available Generation (MW)', marker_color='#35ABDE')
 
             #add bar chart for dispatch
-            fig.add_bar(x=dispatch_df['SETTLEMENTDATE'], y=dispatch_df['AVAILABLEGENERATION'], name='Dispatch - Available Generation (MWh)', marker_color='#085A9D')
+            fig.add_bar(x=dispatch_df['SETTLEMENTDATE'], y=dispatch_df['AVAILABLEGENERATION'], name='Dispatch - Available Generation (MW)', marker_color='#085A9D')
 
             #update legend position
             fig.update_layout(legend=dict(
@@ -153,7 +153,7 @@ def generation_page():
         state = states_list[session_state.live_state]
 
         #display spot price view
-        st.header(f"{state} Spot Price")
+        st.header(f"{state} Market Generation")
         display_gen_view(state=f"{state}1")
 
         #display progress bar to show which state is currently being displayed
