@@ -3,6 +3,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from streamlit import session_state
 from PIL import Image
 import mtatk
@@ -75,22 +76,36 @@ def display_gen_data(state: str):
 
             plot_df =full_df.copy()
 
-            # Create line chart with Plotly
-            fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['TOTALDEMAND'],
-                            labels={
-                                plot_df['SETTLEMENTDATE'].name:'Date',
-                                plot_df['TOTALDEMAND'].name: 'Total Demand (MW)',
-                                'color': 'Legend'
+            # # Create line chart with Plotly
+            # fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['TOTALDEMAND'],
+            #                 labels={
+            #                     plot_df['SETTLEMENTDATE'].name:'Date',
+            #                     plot_df['TOTALDEMAND'].name: 'Total Demand (MW)',
+            #                     'color': 'Legend'
 
-                            },
-                            color=px.Constant("Total Demand (MW)"),
-                            color_discrete_sequence=["#8FCEA1"])
+            #                 },
+            #                 color=px.Constant("Total Demand (MW)"),
+            #                 color_discrete_sequence=["#8FCEA1"])
             
-            #add bar chart for generation
-            fig.add_bar(x=predispatch_df['SETTLEMENTDATE'], y=predispatch_df['AVAILABLEGENERATION'], name='Pre-Dispatch - Available Generation (MW)', marker_color='#35ABDE')
+            # #add bar chart for generation
+            # fig.add_bar(x=predispatch_df['SETTLEMENTDATE'], y=predispatch_df['AVAILABLEGENERATION'], name='Pre-Dispatch - Available Generation (MW)', marker_color='#35ABDE')
 
-            #add bar chart for dispatch
-            fig.add_bar(x=dispatch_df['SETTLEMENTDATE'], y=dispatch_df['AVAILABLEGENERATION'], name='Dispatch - Available Generation (MW)', marker_color='#085A9D')
+            # #add bar chart for dispatch
+            # fig.add_bar(x=dispatch_df['SETTLEMENTDATE'], y=dispatch_df['AVAILABLEGENERATION'], name='Dispatch - Available Generation (MW)', marker_color='#085A9D')
+
+            # #update legend position
+            # fig.update_layout(legend=dict(
+            #     yanchor="top",
+            #     y=1.1,
+            #     x=0,
+            #     orientation='h'
+            # ))
+
+            fig =go.Figure()
+
+            fig.add_trace(go.Scatter(x=predispatch_df['SETTLEMENTDATE'], y=predispatch_df['AVAILABLEGENERATION'], name='Pre-Dispatch - Available Generation (MW)', marker_color='#35ABDE',fill='tozeroy'))
+            fig.add_trace(go.Scatter(x=dispatch_df['SETTLEMENTDATE'], y=dispatch_df['AVAILABLEGENERATION'], name='Dispatch - Available Generation (MW)', marker_color='#085A9D',fill='tozeroy'))
+            fig.add_trace(go.Scatter(x=plot_df['SETTLEMENTDATE'], y=plot_df['TOTALDEMAND'], name='Total Demand (MW)', marker_color='#8FCEA1'))
 
             #update legend position
             fig.update_layout(legend=dict(
@@ -98,9 +113,9 @@ def display_gen_data(state: str):
                 y=1.1,
                 x=0,
                 orientation='h'
-            ))
-
-            
+            ),
+            yaxis_title='MW'
+            )
     
             #render fig
             st.plotly_chart(fig, use_container_width=True)
