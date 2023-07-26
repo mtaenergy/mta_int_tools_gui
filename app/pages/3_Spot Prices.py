@@ -29,7 +29,7 @@ session_state.display_details=False
 
 # update every 20 seconds
 refresh_count=0
-refresh_count=st_autorefresh(interval=60*1000, key="pricerefresh")
+refresh_count=st_autorefresh(interval=20*1000, key="pricerefresh")
 
 states_list=['NSW', 'QLD', 'SA', 'TAS', 'VIC']
 regions_list=['NSW1', 'QLD1', 'SA1', 'TAS1', 'VIC1']
