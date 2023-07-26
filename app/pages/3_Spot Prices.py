@@ -31,7 +31,8 @@ session_state.display_details=False
 refresh_count=0
 refresh_count=st_autorefresh(interval=60*1000, key="pricerefresh")
 
-states_list=['NSW', 'QLD', 'VIC', 'SA', 'TAS']
+states_list=['NSW', 'QLD', 'SA', 'TAS', 'VIC']
+regions_list=['NSW1', 'QLD1', 'SA1', 'TAS1', 'VIC1']
 states_progress_bar={
     'NSW': 0,
     'QLD': 0.25,
@@ -63,7 +64,7 @@ def display_spot_price_view(state: str):
     predispatch_df = pd.concat([predispatch5min_df,predispatch30min_df], axis=0)
 
     #chop off last row of predispatch df
-    predispatch_df=predispatch_df.tail(-1)
+    predispatch_df=predispatch_df.tail(-10)
 
     #drop duplicates in full df and reset index
     full_df = full_df.drop_duplicates(subset=['SETTLEMENTDATE','REGIONID']).reset_index(drop=True)
@@ -90,79 +91,47 @@ def display_spot_price_view(state: str):
             #set line color for dispatch
             fig['data'][1]['line']['color']="#085A9D"
             
-    
             #render fig
             st.plotly_chart(fig, use_container_width=True)
 
-            st.table(dispatch_df)
 
-
-            st.subheader('Dispatch Metrics')
-            display_df_info(dispatch_df,option='dispatch')
-            # st.subheader('Pre-Dispatch Metrics')
-            # display_df_info(predispatch_df,option='predispatch')
+    with st.empty():
+        with st.container():
+            col1, col2 = st.columns(2)
+            with col1:
+                st.subheader('Dispatch Metrics')
+                display_df_info(dispatch_df,option='dispatch')
+            with col2:
+                st.subheader('Pre-Dispatch Metrics')
+                display_df_info(predispatch_df,option='predispatch')
 
 def display_df_info(df: pd.DataFrame,option: str) -> None:
 
-    #format table to display metrics
-    latest_rrp = df.loc[df['SETTLEMENTDATE']==df['SETTLEMENTDATE'].max()]['RRP']
+    #CREATE SERIES OF EACH METRIC AND THE CONCAT TO DF
 
-    st.table(latest_rrp)
+    #get series for latest rrp
+    latest_rrp = df.loc[df['SETTLEMENTDATE']==df['SETTLEMENTDATE'].max()][['RRP']].reset_index(drop=True).set_index(pd.Index(regions_list)).squeeze()
 
+    #get series for next rrp
+    next_rrp = df.loc[df['SETTLEMENTDATE']==df['SETTLEMENTDATE'].min()][['RRP']].iloc[::-1].reset_index(drop=True).set_index(pd.Index(regions_list)).squeeze()
 
+    #get series for mean rrp
+    mean_rrp = df.groupby('REGIONID').mean()['RRP']
 
-    # #get latest rrp
-    # latest_rrp = df.iloc[-1,:]['RRP']
+    #get series for max rrp
+    max_rrp = df.groupby('REGIONID').max()['RRP']
 
-    # #format as string
-    # latest_rrp_str = "{:,.2f}".format(latest_rrp)
+    #get series for min rrp
+    min_rrp = df.groupby('REGIONID').min()['RRP']
 
-    # #get next rrp for predispatch
-    # next_rrp = df.iloc[0,:]['RRP']
+    #combine into one df
+    if option =='dispatch':
+        metrics_df=pd.DataFrame({'Latest RRP':latest_rrp,'Mean RRP':mean_rrp,'Max RRP':max_rrp,'Min RRP':min_rrp})
+    elif option =='predispatch':
+        metrics_df=pd.DataFrame({'Next RRP':next_rrp,'Mean RRP':mean_rrp,'Max RRP':max_rrp,'Min RRP':min_rrp})
 
-    # #format as string
-    # next_rrp_str = "{:,.2f}".format(next_rrp)
-
-    # #get average rrp
-    # mean_rrp = df['RRP'].mean()
-
-    # #format as string
-    # mean_rrp_str = "{:,.2f}".format(mean_rrp)
-
-    # #get max rrp
-    # max_rrp = df['RRP'].max()
-
-    # #format as string
-    # max_rrp_str = "{:,.2f}".format(max_rrp)
-
-    # #get min rrp
-    # min_rrp = df['RRP'].min()
-
-    # #format as string
-    # min_rrp_str = "{:,.2f}".format(min_rrp)
-
-    # #display stats
-    # with st.container():
-    #     col1, col2, col3, col4 = st.columns(4)
-
-    #     with col1:
-    #         if option =='dispatch':
-    #             st.metric('Latest RRP $: ', latest_rrp_str)
-    #         elif option =='predispatch':
-    #             st.metric('Next RRP $: ', next_rrp_str)
-    #         else:
-    #             raise ValueError("Invalid option selected. Make sure the option selected is either dispatch or predispatch")
-
-    #     with col2:
-
-    #         st.metric('Mean RRP $: ', mean_rrp_str)
-
-    #     with col3:
-    #         st.metric('Max RRP $: ', max_rrp_str)
-
-    #     with col4:
-
-    #         st.metric('Min RRP $: ', min_rrp_str)
+    # set each metric to be 2 dp
+    st.table(metrics_df.applymap('{:.2f}'.format))
 
 def spot_price_page():
     if session_state.authentication_status:
@@ -198,7 +167,7 @@ def spot_price_page():
             if session_state.live_state ==len(states_list):
                 session_state.live_state=0 
 
-        
+       
 setup_session_states()
 
 if __name__ == "__main__":

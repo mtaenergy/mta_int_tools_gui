@@ -2,6 +2,7 @@ altair
 click
 streamlit
 streamlit-authenticator==0.2.2
+streamlit_autorefresh
 pandas
 protobuf
 geopy
@@ -10,3 +11,5 @@ plotly
 azure-identity
 azure-keyvault-secrets
 azure-keyvault-certificates
+git+https://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:x-oauth-basic@github.com/mtaenergy/mtatk.git@main
+
