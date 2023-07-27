@@ -32,22 +32,27 @@ session_state.display_details=False
 refresh_count=0
 refresh_count=st_autorefresh(interval=20*1000, key="generationrefresh")
 
-states_list=['NSW', 'QLD', 'VIC', 'SA', 'TAS']
+states_list=['NSW', 'QLD', 'SA', 'TAS', 'VIC']
 states_progress_bar={
     'NSW': 0,
     'QLD': 0.25,
-    'VIC': 0.5,
-    'SA': 0.75,
-    'TAS': 1.0
+    'SA': 0.5,
+    'TAS': 0.75,
+    'VIC': 1.0
 }
 
 
 def display_gen_data(state: str):
     #get initial data
     lookback_hours = 24
-    dispatch_df=get_dispatch_demand_data(lookback_hours=lookback_hours, region_id=state)
-    predispatch30min_df=get_predispatch_data_30min(region_id=state)
-    predispatch5min_df=get_predispatch_data_5min(region_id=state)
+    dispatch_df=get_dispatch_demand_data(lookback_hours=lookback_hours)
+    predispatch30min_df=get_predispatch_data_30min()
+    predispatch5min_df=get_predispatch_data_5min()
+
+    #filter for state
+    dispatch_df=dispatch_df[dispatch_df['REGIONID']==state]
+    predispatch30min_df=predispatch30min_df[predispatch30min_df['REGIONID']==state]
+    predispatch5min_df=predispatch5min_df[predispatch5min_df['REGIONID']==state]
 
     #drop unneeded columns and rename columns to match
     predispatch30min_df = predispatch30min_df.drop(columns=['RRP'])
@@ -76,36 +81,13 @@ def display_gen_data(state: str):
 
             plot_df =full_df.copy()
 
-            # # Create line chart with Plotly
-            # fig = px.line(plot_df, x=plot_df['SETTLEMENTDATE'], y= plot_df['TOTALDEMAND'],
-            #                 labels={
-            #                     plot_df['SETTLEMENTDATE'].name:'Date',
-            #                     plot_df['TOTALDEMAND'].name: 'Total Demand (MW)',
-            #                     'color': 'Legend'
 
-            #                 },
-            #                 color=px.Constant("Total Demand (MW)"),
-            #                 color_discrete_sequence=["#8FCEA1"])
-            
-            # #add bar chart for generation
-            # fig.add_bar(x=predispatch_df['SETTLEMENTDATE'], y=predispatch_df['AVAILABLEGENERATION'], name='Pre-Dispatch - Available Generation (MW)', marker_color='#35ABDE')
-
-            # #add bar chart for dispatch
-            # fig.add_bar(x=dispatch_df['SETTLEMENTDATE'], y=dispatch_df['AVAILABLEGENERATION'], name='Dispatch - Available Generation (MW)', marker_color='#085A9D')
-
-            # #update legend position
-            # fig.update_layout(legend=dict(
-            #     yanchor="top",
-            #     y=1.1,
-            #     x=0,
-            #     orientation='h'
-            # ))
 
             fig =go.Figure()
 
             fig.add_trace(go.Scatter(x=predispatch_df['SETTLEMENTDATE'], y=predispatch_df['AVAILABLEGENERATION'], name='Pre-Dispatch - Available Generation (MW)', marker_color='#35ABDE',fill='tozeroy'))
             fig.add_trace(go.Scatter(x=dispatch_df['SETTLEMENTDATE'], y=dispatch_df['AVAILABLEGENERATION'], name='Dispatch - Available Generation (MW)', marker_color='#085A9D',fill='tozeroy'))
-            fig.add_trace(go.Scatter(x=plot_df['SETTLEMENTDATE'], y=plot_df['TOTALDEMAND'], name='Total Demand (MW)', marker_color='#8FCEA1'))
+            fig.add_trace(go.Scatter(x=plot_df['SETTLEMENTDATE'], y=plot_df['TOTALDEMAND'], name='Total Demand (MW)', marker_color='#FFBF74'))
 
             #update legend position
             fig.update_layout(legend=dict(
@@ -124,7 +106,8 @@ def display_gen_data(state: str):
 
 def display_UIGF_data(state: str):
     #get initial data
-    predispatch_df=get_predispatch_data_5min(region_id=state)
+    predispatch_df=get_predispatch_data_5min()
+    predispatch_df=predispatch_df[predispatch_df['REGIONID']==state]
 
     #filter for just UIGF
     UIGF_df = predispatch_df[['SS_SOLAR_UIGF','SS_WIND_UIGF']]

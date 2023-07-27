@@ -36,9 +36,9 @@ regions_list=['NSW1', 'QLD1', 'SA1', 'TAS1', 'VIC1']
 states_progress_bar={
     'NSW': 0,
     'QLD': 0.25,
-    'VIC': 0.5,
-    'SA': 0.75,
-    'TAS': 1.0
+    'SA': 0.5,
+    'TAS': 0.75,
+    'VIC': 1.0
 }
 
 
@@ -137,11 +137,11 @@ def spot_price_page():
     if session_state.authentication_status:
 
         #display logo
-        with st.container():
-            col1, col2, col3, col4, col5 = st.columns(5)
+        # with st.container():
+        #     col1, col2, col3, col4, col5 = st.columns(5)
 
-            with col3:
-                st.image(Image.open(img_path),use_column_width=True)
+        #     with col3:
+        #         st.image(Image.open(img_path),use_column_width=True)
 
         #configure sidebar to have user name
         st.sidebar.title(f"Welcome {st.session_state['name']}")
