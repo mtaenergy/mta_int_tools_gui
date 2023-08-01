@@ -20,6 +20,8 @@ current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
 
 
+
+
 @st.cache_data
 def setup_API_con() -> APIConnector:
     """Summary of setup_API_con: Function to setup API Connector object for use in app

@@ -30,7 +30,7 @@ session_state.display_details=False
 
 # update every 1 min
 refresh_count=0
-refresh_count=st_autorefresh(interval=20*1000, key="generationrefresh")
+refresh_count=st_autorefresh(interval=20*1000, key="siterefresh")
 
 states_list=['NSW', 'QLD', 'SA', 'TAS', 'VIC']
 states_progress_bar={

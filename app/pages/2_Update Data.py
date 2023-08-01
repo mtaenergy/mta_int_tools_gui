@@ -24,6 +24,7 @@ global_nmi_list=global_nmi_list+get_nmi_list()
 
 #clear flag to display NMI details
 session_state.display_details=False
+session_state.live_state=0
 
 # Page : Update Data
 

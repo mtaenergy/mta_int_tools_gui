@@ -25,7 +25,7 @@ site_list = ['Select a site']
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
 
-
+session_state.live_state=0
 
 
 # Page: NMI Details

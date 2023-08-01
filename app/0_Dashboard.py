@@ -26,6 +26,7 @@ client_list = ['Select a customer','Best and Less Pty Ltd','TJX Australia Pty Lt
 
 #clear flag to display NMI details
 session_state.display_details=False
+session_state.live_state=0
 
 
 #setup function for home page
