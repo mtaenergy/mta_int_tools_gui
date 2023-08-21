@@ -40,10 +40,10 @@ def home_page():
     if authentication_status ==False:
         st.error("Username/password is incorrect")
 
-    if authentication_status==None:
+    elif authentication_status==None:
         st.warning("Please enter a username and password")
 
-    if authentication_status:
+    elif authentication_status:
         #run app
 
         #configure sidebar

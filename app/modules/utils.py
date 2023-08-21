@@ -8,7 +8,7 @@ from streamlit import session_state
 import pandas as pd
 from pathlib import Path
 import base64
-from datetime import date
+from datetime import date, datetime
 import logging
 from geopy.geocoders import Nominatim
 import streamlit_authenticator as stauth
@@ -176,6 +176,29 @@ def setup_colour_themes()-> dict:
     customer_colour_map = {group: colours[group] for group in colours}
 
     return customer_colour_map
+
+
+def update_region_state():
+    # Get the current time
+    current_time = datetime.now()
+    seconds = current_time.second
+
+    logging.info(f"Seconds: {seconds}")
+
+    # Define the time ranges and corresponding values
+    time_ranges_values = [
+        (0, 12, 0),
+        (13, 24, 1),
+        (25, 36, 2),
+        (37, 48, 3),
+        (49, 60, 4)
+    ]
+
+    # Check which range the seconds fall into and set the corresponding value
+    for range_start, range_end, value in time_ranges_values:
+        if range_start <= seconds <= range_end:
+            session_state.live_state = value
+            break
 
 '''
 GET FUNCTIONS TO SQL DB
@@ -441,8 +464,7 @@ def get_nmi_list()-> list:
         list: list of nmis
     """
 
-    #get current date
-    current_day = date.today().strftime("%Y-%m-%d")
+
 
     #setup query
     table_name="mtae_ops_billing_nmi_standing_data_prod"
@@ -450,7 +472,23 @@ def get_nmi_list()-> list:
 
     #get customer data
     customer_df=sql_con.query_sql(query=query,database='standingdata')
-    customer_nmis =  customer_df['nmi'].unique().tolist()
+    nmi_list =  customer_df['nmi'].unique().tolist()
+
+    return nmi_list
+
+@st.cache_data
+def check_active_nmi(nmi: str) ->bool:
+    """Summary of check_active_nmi: Function to check if nmi is active as of today
+
+    Args:
+        nmi (str): nmi to check
+
+    Returns:
+        bool: True if active, False if not active
+    """
+
+    #get current date
+    current_day = date.today().strftime("%Y-%m-%d")
 
     #get data with nmi frmp data
     table_name= "mtae_ops_nmi_frmp_dates"
@@ -463,10 +501,11 @@ def get_nmi_list()-> list:
     #get list of active nmi's
     active_nmi_list=active_nmis_df['nmi'].unique().tolist()
 
-    #determine the intersection between customer nmi list and active nmi list
-    nmi_list = list(set(customer_nmis) & set(active_nmi_list))
-
-    return nmi_list
+    #check if nmi is in active list
+    if nmi in active_nmi_list:
+        return True
+    else:
+        return False
 
 @st.cache_data
 def get_nmi_msats_data(nmi: str) -> pd.DataFrame:

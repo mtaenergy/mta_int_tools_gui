@@ -5,11 +5,10 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from streamlit import session_state
-from PIL import Image
-import mtatk
 from streamlit_autorefresh import st_autorefresh
+import logging 
 
-from modules.utils import *
+from modules.utils import get_dispatch_data, get_predispatch_data_30min, get_predispatch_data_5min, setup_session_states
 
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
@@ -61,7 +60,9 @@ def display_spot_price_view(state: str):
 
     #concatenate dataframes based on rrp
     full_df = pd.concat([dispatch_df,predispatch5min_df,predispatch30min_df], axis=0)
+    #full_df = pd.concat([dispatch_df,predispatch30min_df], axis=0)
     predispatch_df = pd.concat([predispatch5min_df,predispatch30min_df], axis=0)
+    #predispatch_df = pd.concat([predispatch30min_df], axis=0)
 
     #chop off last row of predispatch df
     predispatch_df=predispatch_df.tail(-10)
@@ -160,12 +161,13 @@ def spot_price_page():
 
         if refresh_count % 1 == 0:
             #st.cache_data.clear()
-            logging.info(f"refresh cleared")
-            logging.info(f"index count {session_state.live_state}")
+            logging.info(f" refresh cleared. index count {session_state.live_state}")
 
             session_state.live_state +=1
             if session_state.live_state ==len(states_list):
                 session_state.live_state=0 
+
+            #update_region_state()
 
        
 setup_session_states()

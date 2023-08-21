@@ -121,6 +121,7 @@ def nmi_page():
                         site_size = nmi_site_details['site_size']
                         site_alias = nmi_site_details['site_alias']
                         site_address = nmi_site_details['site_address']
+                        nmi_active = check_active_nmi(nmi=nmi_in)
 
                         #logging.info(site_customer)
 
@@ -203,8 +204,8 @@ def nmi_page():
                         with col2:
                             #create details table
                             details_data ={
-                                'Detail': ['Master Customer','Site Alias', 'Site Address','Site Size', 'Jurisdiction Code','Customer Classification Code', 'Customer Threshold Code','Network Tariff Code'],
-                                'Value': [site_customer, site_alias,site_address, site_size, jurisdiction_code,customer_class_code,customer_thresh_code,network_tariff_code]
+                                'Detail': ['Master Customer','Site Alias', 'Site Address','Site Size', 'Jurisdiction Code','Customer Classification Code', 'Customer Threshold Code','Network Tariff Code','Is NMI Active'],
+                                'Value': [site_customer, site_alias,site_address, site_size, jurisdiction_code,customer_class_code,customer_thresh_code,network_tariff_code,nmi_active]
                             }
 
                             details_df = pd.DataFrame(details_data)
