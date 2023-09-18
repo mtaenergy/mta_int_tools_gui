@@ -154,6 +154,10 @@ def setup_session_states():
     if 'display_details' not in session_state:
         session_state['display_details'] = False
 
+    if 'authenticator' not in session_state:
+        session_state['authenticator'] = None
+
+
 
     #reset sub key if returned to dashboard
     #session_state.sub_key=False
@@ -434,6 +438,10 @@ def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
 
     #drop date columns
     billing_df.drop(['bill_run_end_date'],axis=1, inplace=True)
+
+    #update Joinpro and chemist warehouse if needed
+    billing_df['master_customer'].replace({'JOINPRO AUSTRALIA PTY LTD':'Joinpro Australia Pty Ltd',
+                                           'Chemist Warehouse ': 'Chemist Warehouse Pty Ltd'},inplace=True)
 
     return billing_df
 

@@ -141,6 +141,7 @@ def display_gen_view(state:str)->None:
 
 def generation_page():
     if session_state.authentication_status:
+        session_state.authenticator.logout("Logout","sidebar",key='unique_key')
 
         #display logo
         with st.container():

@@ -37,7 +37,7 @@ def nmi_page():
     if session_state.authentication_status:
 
         # #configure sidebar
-        # authenticator.logout("Logout","sidebar",key='unique_key')
+        session_state.authenticator.logout("Logout","sidebar",key='unique_key')
         st.sidebar.title(f"Welcome {st.session_state['name']}")
 
 

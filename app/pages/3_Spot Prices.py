@@ -136,6 +136,7 @@ def display_df_info(df: pd.DataFrame,option: str) -> None:
 
 def spot_price_page():
     if session_state.authentication_status:
+        session_state.authenticator.logout("Logout","sidebar",key='unique_key')
 
         #display logo
         # with st.container():

@@ -36,9 +36,7 @@ session_state.display_details=False
 session_state.live_state=0
 
 
-#setup function for home page
-def home_page():
-
+def login():
     authenticator, name = setup_authentication()
 
     name, authentication_status, username  = authenticator.login('Login','main')
@@ -50,13 +48,22 @@ def home_page():
     elif authentication_status==None:
         st.warning("Please enter a username and password")
 
-    elif authentication_status:
-        #run app
+    else:
+        st.success("Login successful")
+        session_state.name=name 
+        session_state.authenticator = authenticator
+        home_page()
 
+
+#setup function for home page
+def home_page():
+
+    if session_state.authentication_status:
         #configure sidebar
-        authenticator.logout("Logout","sidebar",key='unique_key')
-        st.sidebar.title(f"Welcome {name}")
+        session_state.authenticator.logout("Logout","sidebar",key='unique_key')
+        st.sidebar.title(f"Welcome {session_state.name}")
 
+        #run app
 
         with st.container():
             col1, col2, col3 = st.columns(3)
@@ -204,4 +211,8 @@ def home_page():
 
 
 setup_session_states()
-home_page()
+
+if not session_state.authentication_status:
+    login()
+else:
+    home_page()
