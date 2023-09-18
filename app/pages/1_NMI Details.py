@@ -114,7 +114,6 @@ def nmi_page():
 
                         #st.header("Display map and nmi deets")
 
-                        #case where if the nmi isn't a best and less nmi, then use api
                         #site info
                         nmi_site_details = get_nmi_customer(nmi=nmi_in)
                         site_customer = nmi_site_details['master_customer']
@@ -125,62 +124,37 @@ def nmi_page():
 
                         #logging.info(site_customer)
 
-
-                        if site_customer != 'Best and Less Pty Ltd':
-                        
-                            #get df entry for the chosen nmi
-                            nmi_details = get_nmi_msats_data(nmi=nmi_in)
-                            nmi_reg_details = get_nmi_tariff(nmi=nmi_in)
-                            nmi_party_details = get_nmi_participants(nmi=nmi_in)
-
-                            customer_class_code = nmi_details['customer_classification_code']
-                            customer_thresh_code = nmi_details['customer_threshold_code']
-                            jurisdiction_code = nmi_details['jurisdiction_code']
-
-                            #nmi_reg_details = nmi_reg_details.sort_values(ascending=False)
-
-                            #get tariff code
-                            network_tariff_code = nmi_reg_details['network_tariff_code']
-
-                            #rename colummns
-                            nmi_party_details=nmi_party_details[['party','role','from_date']]
-                            nmi_party_details = nmi_party_details.rename(columns={"party": "Party", 'role': 'Role', 'from_date': 'From Date'})
+                        #setup site and nmi class using nmi_in
+                        site_id = get_site_id(nmi=nmi_in)
+                        site = mtatk.mta_class_site.Site(site_id=site_id)
+                        nmi = mtatk.mta_class_nmi.NMI(nmi=site.site_details.nmi, start_date=start_dt_in, end_date=end_dt_in,api_con = api_con)
 
 
-                        else:
+                        nmi_details = nmi.standing_data.master_data
+                        nmi_reg_details = nmi.standing_data.registers
+                        nmi_party_details = nmi.standing_data.roles
 
-                            #setup site and nmi class using nmi_in
-                            site_id = get_site_id(nmi=nmi_in)
-                            site = mtatk.mta_class_site.Site(site_id=site_id)
-                            nmi = mtatk.mta_class_nmi.NMI(nmi=site.site_details.nmi, start_date=start_dt_in, end_date=end_dt_in,api_con = api_con)
+                        #logging.info(nmi_details)
 
+                        #try and except as not all sites may have codes
+                        try:
+                            customer_class_code = nmi_details['CustomerClassificationCode']
+                            customer_thresh_code = nmi_details['CustomerThresholdCode']
+                        except:
+                            customer_class_code = '<N/A>'
+                            customer_thresh_code = '<N/A>'
+                            
+                        jurisdiction_code = nmi_details['JurisdictionCode']
 
-                            nmi_details = nmi.standing_data.master_data
-                            nmi_reg_details = nmi.standing_data.registers
-                            nmi_party_details = nmi.standing_data.roles
+                        #TARIFF INFO
+                        #order reg details
+                        nmi_reg_details = nmi_reg_details.sort_values('CreationDate',ascending=False)
 
-                            #logging.info(nmi_details)
-    
+                        #get tariff code
+                        network_tariff_code = nmi_reg_details['NetworkTariffCode'].iloc[0]
 
-                            #try and except as not all sites may have codes
-                            try:
-                                customer_class_code = nmi_details['CustomerClassificationCode']
-                                customer_thresh_code = nmi_details['CustomerThresholdCode']
-                            except:
-                                customer_class_code = '<N/A>'
-                                customer_thresh_code = '<N/A>'
-                                
-                            jurisdiction_code = nmi_details['JurisdictionCode']
-
-                            #TARIFF INFO
-                            #order reg details
-                            nmi_reg_details = nmi_reg_details.sort_values('CreationDate',ascending=False)
-
-                            #get tariff code
-                            network_tariff_code = nmi_reg_details['NetworkTariffCode'].iloc[0]
-
-                            #only keep required columns from nmi_party_details
-                            nmi_party_details=nmi_party_details[['Party','Role','CreationDate']]
+                        #only keep required columns from nmi_party_details
+                        nmi_party_details=nmi_party_details[['Party','Role','CreationDate']]
 
 
                         #replace AUS with australia
@@ -221,29 +195,13 @@ def nmi_page():
                 with st.container():
                         
                         ## PLOT
-                    
-                        #filter for reading type
-                        if site_customer == 'Best and Less Pty Ltd':
-                                
-                            #consumption series
-                            consump_ser = nmi.meter_data.consumption_kwh
+                          
+                        #consumption series
+                        consump_ser = nmi.meter_data.consumption_kwh
 
-                            #generation series
-                            gen_ser = nmi.meter_data.generation_kwh
-                    
-                        else:
-
-                            #retrieve data from API
-                            meter_data_df= api_con.get_interval_meter_data(nmi=nmi_in,start_date=start_dt_in, end_date=end_dt_in, grouped_by_nmi=True, drop_estimates=False)
-                            
-                            #set settlement date to be the index
-                            meter_data_df.set_index('settlement_datetime', inplace=True)
-
-                            # set series
-                            consump_ser = pd.Series(meter_data_df.loc[meter_data_df['nmi_suffix']=='export_kwh']['reading'])
-                            gen_ser = pd.Series(meter_data_df.loc[meter_data_df['nmi_suffix']=='import_kwh']['reading'])
-
-
+                        #generation series
+                        gen_ser = nmi.meter_data.generation_kwh
+                
                         #concat the series into the same df
                         plot_df = pd.DataFrame({'Consumption kWh': consump_ser, 'Generation kWh': gen_ser})
                         
@@ -278,13 +236,9 @@ def nmi_page():
 
 
                         ## DOWNLOAD DATA
-                        if site_customer == 'Best and Less Pty Ltd':
-                        
-                            #create df with all metrics
-                            download_df = pd.concat([nmi.meter_data.consumption_kwh,nmi.meter_data.generation_kwh],axis=1)
 
-                        else:
-                            download_df = plot_df
+                        #create df with all metrics
+                        download_df = pd.concat([nmi.meter_data.consumption_kwh,nmi.meter_data.generation_kwh],axis=1)
 
                         # add download button for df
                         csv = convert_df(download_df)
@@ -308,21 +262,12 @@ def nmi_page():
 
                 # demand container
                 with st.container():
-                        
-                    ## PLOT
-                
-                    #filter for reading type
-                    if site_customer == 'Best and Less Pty Ltd':
-                            
-                        #demand kW series
-                        dem_kw_ser = nmi.meter_data.demand_kw
+                    
+                    #demand kW series
+                    dem_kw_ser = nmi.meter_data.demand_kw
 
-                        #demand kVA series
-                        dem_kva_ser = nmi.meter_data.demand_kva
-                
-                    else:
-
-                        st.warning('Demand data not available for this NMI as AEMO API does not support it')
+                    #demand kVA series
+                    dem_kva_ser = nmi.meter_data.demand_kva
 
 
                     #concat the series into the same df
@@ -372,13 +317,8 @@ def nmi_page():
 
 
                     ## DOWNLOAD DATA
-                    if site_customer == 'Best and Less Pty Ltd':
-                    
-                        #create df with all metrics
-                        download_df = pd.concat([nmi.meter_data.demand_kw,nmi.meter_data.demand_kva],axis=1)
-
-                    else:
-                            download_df = plot_df
+                    #create df with all metrics
+                    download_df = pd.concat([nmi.meter_data.demand_kw,nmi.meter_data.demand_kva],axis=1)
 
                     # add download button for df
                     csv = convert_df(download_df)
@@ -399,20 +339,10 @@ def nmi_page():
 
                 # power factor container
                 with st.container():
-                                    
-                    ## PLOT
+       
+                    #power factor series
+                    pf_ser = nmi.meter_data.powerfactor
                 
-                    #filter for reading type
-                    if site_customer == 'Best and Less Pty Ltd':
-                            
-                        #power factor series
-                        pf_ser = nmi.meter_data.powerfactor
-                
-                    else:
-
-                        st.warning('Power Factor data not available for this NMI as AEMO API does not support it')
-
-
                     #concat the series into the same df
                     plot_df = pd.DataFrame({'Power Factor': pf_ser})
 
@@ -429,7 +359,6 @@ def nmi_page():
                     #render fig
                     st.plotly_chart(fig, use_container_width=True)
 
-
                     ## METRICS
                     col1, col2, col3, col4= st.columns(4)
 
@@ -443,13 +372,9 @@ def nmi_page():
 
 
                     ## DOWNLOAD DATA
-                    if site_customer == 'Best and Less Pty Ltd':
-                    
-                        #create df with all metrics
-                        download_df = pd.concat([nmi.meter_data.powerfactor],axis=1)
 
-                    else:
-                            download_df = plot_df
+                    #create df with all metrics
+                    download_df = pd.concat([nmi.meter_data.powerfactor],axis=1)
 
                     # add download button for df
                     csv = convert_df(download_df)
@@ -470,18 +395,9 @@ def nmi_page():
                     
                 #carbon container
                 with st.container():
-                ## PLOT
-            
-                    #filter for reading type
-                    if site_customer == 'Best and Less Pty Ltd':
-                            
-                        #carbon series in tons
-                        carbon_ser = nmi.carbon_data.carbon_emissions/1000
-        
-                    else:
-
-                        st.warning('Carbon data not available for this NMI as AEMO API does not support it')
-
+          
+                    #carbon series in tons
+                    carbon_ser = nmi.carbon_data.carbon_emissions/1000
 
                     #concat the series into the same df
                     plot_df = pd.DataFrame({'Carbon tons': carbon_ser})
@@ -511,13 +427,9 @@ def nmi_page():
                         st.metric('Total Carbon tonnes',total_carbon_tons)
 
                     ## DOWNLOAD DATA
-                    if site_customer == 'Best and Less Pty Ltd':
-                    
-                        #create df with all metrics
-                        download_df = pd.concat([nmi.carbon_data.carbon_emissions],axis=1)
 
-                    else:
-                            download_df = plot_df
+                    #create df with all metrics
+                    download_df = pd.concat([nmi.carbon_data.carbon_emissions],axis=1)
 
                     # add download button for df
                     csv = convert_df(download_df)

@@ -5,6 +5,13 @@ from PIL import Image
 from pathlib import Path
 import plotly.graph_objects as go
 import plotly.express as px
+import logging
+
+logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
+logging.getLogger("azure.identity").setLevel(logging.WARNING)
+logging.getLogger("azure.core").setLevel(logging.WARNING)
+logging.getLogger("msal").setLevel(logging.WARNING)
+logging.getLogger("geopy").setLevel(logging.WARNING)
 
 
 st.set_page_config(
@@ -21,7 +28,7 @@ img_path = "app/imgs/400dpiLogo.jpg"
 
 
 #define list of all clients
-client_list = ['Select a customer','Best and Less Pty Ltd','TJX Australia Pty Ltd']
+#client_list = ['Select a customer','Best and Less Pty Ltd','TJX Australia Pty Ltd']
 
 
 #clear flag to display NMI details
@@ -62,12 +69,13 @@ def home_page():
         #container for lookback selector
         with st.container():
             elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year", "Last FY", "FY to date"))
-
             logging.info(elected_period)
 
             # collect billing df based on elected period
             columns='[nmi],[total_cost_ex_gst],[charge_group],[charge_name],[volume],[scaling_factor],[loss_factor]'
             billing_df=get_billing_records_prod_df(columns=columns, lookback_op=elected_period)
+
+            #
 
         #container to select  customer
         with st.container():
@@ -76,8 +84,10 @@ def home_page():
 
             with col3:
                 #customer select
-                #customer_sel= st.selectbox(" ", client_list)
-                pass
+                client_list = billing_df['master_customer'].unique().tolist()
+                customer_sel= st.multiselect(label='Filter by customer',options=client_list)
+                if customer_sel!=[]:
+                    billing_df = billing_df[billing_df['master_customer'].isin(customer_sel)]
 
         #container for high level statistics
         with st.container():
