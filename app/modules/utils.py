@@ -707,6 +707,9 @@ def get_solar_generation_data(site: str)-> pd.DataFrame:
     #get solae data
     solar_df=sql_con.query_sql(query=query,database='timeseries')
 
+    #convert datetime to pandas datetime
+    solar_df['datetime']=pd.to_datetime(solar_df['datetime'])
+
     #return solar_df
     return solar_df
 
@@ -835,7 +838,7 @@ def get_solar_sites()-> pd.DataFrame:
     query=(f"SELECT * FROM {table_name}")
 
     #get solar site data
-    solar_sites_df=sql_con.query_sql(query=query,database='standing_data')
+    solar_sites_df=sql_con.query_sql(query=query,database='standingdata')
 
     return solar_sites_df
 

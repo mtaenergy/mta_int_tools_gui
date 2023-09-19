@@ -9,3 +9,7 @@
 *.drawio
 *.bkp
 *.dtmp
+
+*.pyc
+*pycache*
+*.pyc
