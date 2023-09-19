@@ -5,3 +5,7 @@
 *.txt
 *.pyc
 *.pyc
+
+*.drawio
+*.bkp
+*.dtmp
