@@ -704,7 +704,6 @@ def get_predispatch_data_5min()-> pd.DataFrame:
 
     return predispatch_df
 
-
 @st.cache_data
 def get_solar_generation_data(site: str, start_date: str, end_date: str)-> pd.DataFrame:
     table_name='mtae_ops_solar_generated_5min'
@@ -729,6 +728,19 @@ def get_solar_generation_data(site: str, start_date: str, end_date: str)-> pd.Da
 
     #return solar_df
     return solar_df
+
+@st.cache_data
+def get_nem12_data(nmi: str, start_date: str, end_date: str, nmi_suffix: str = None)-> pd.DataFrame:
+    table_name= 'aemo_msats_mtrd_nem12_prod'
+    query = (f"SELECT settlement_datetime, reading, nmi, nmi_suffix FROM {table_name} "
+             f"WHERE nmi = '{nmi}' and settlement_datetime >= '{start_date}' and settlement_datetime <= '{end_date}'")
+    nem12_df = sql_con.query_sql(query=query,database='timeseries')
+
+    if nmi_suffix is not None:
+        #filter by nmi_suffix
+        nem12_df = nem12_df[nem12_df['nmi_suffix']==nmi_suffix]
+
+    return nem12_df
 
 ## SITE ALIAS FUNCTIONS
 

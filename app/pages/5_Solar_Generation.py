@@ -8,12 +8,12 @@ from streamlit import session_state
 from PIL import Image
 from streamlit_autorefresh import st_autorefresh
 import logging
-from modules.utils import setup_session_states, measure_execution_time, get_solar_generation_data, clear_flag, get_solar_sites,get_site_id, api_con
+from modules.utils import setup_session_states, measure_execution_time, get_solar_generation_data, clear_flag, get_solar_sites,get_site_id, get_nem12_data, api_con
 from mtatk.mta_class_nmi import NMI
 
 img_path = "app/imgs/400dpiLogo.jpg"
 
-
+@measure_execution_time
 def dislay_solar_data(solar_sites_df: pd.DataFrame):
 
     #solar site list
@@ -44,11 +44,11 @@ def dislay_solar_data(solar_sites_df: pd.DataFrame):
     #get nmi for chosen site
     nmi = solar_sites_df[solar_sites_df['site_name']==site]['nmi'].values[0]
 
-    #get NMI object
-    nmi_obj = NMI(nmi=nmi, start_date=start_date, end_date=end_date,api_con = api_con)
+    # #get NMI object
+    # nmi_obj = NMI(nmi=nmi, start_date=start_date, end_date=end_date,api_con = api_con)
 
     #get consumption data
-    consumption_ser = nmi_obj.meter_data.consumption_kwh
+    consumption_df = get_nem12_data(nmi=nmi, start_date=start_date, end_date=end_date, nmi_suffix='export_kwh')
 
     #filter for date range
     solar_df = solar_df[(solar_df['datetime']>=start_date_dt) & (solar_df['datetime']<=end_date_dt)]
@@ -57,7 +57,7 @@ def dislay_solar_data(solar_sites_df: pd.DataFrame):
     with st.container():
         fig =go.Figure()
         fig.add_trace(go.Scatter(x=solar_df['datetime'], y=solar_df['energy_generated_kwh'], mode='lines', name='Solar Generation kWh'))
-        fig.add_trace(go.Scatter(x=solar_df['datetime'], y=consumption_ser, mode='lines', name='Grid Consumption kWh'))
+        fig.add_trace(go.Bar(x=solar_df['datetime'], y=consumption_df['reading'], name='Grid Consumption kWh'))
         
         #update legend position
         fig.update_layout(legend=dict(
