@@ -2,4 +2,6 @@
 *.yaml
 *.pyc
 
-requirements.txt
+*.txt
+*.pyc
+*.pyc

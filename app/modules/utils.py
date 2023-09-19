@@ -8,16 +8,27 @@ from streamlit import session_state
 import pandas as pd
 from pathlib import Path
 import base64
-from datetime import date
+from datetime import date, datetime
 import logging
 from geopy.geocoders import Nominatim
 import streamlit_authenticator as stauth
 import pickle
 import json
+import time
 
 
 current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
+
+def measure_execution_time(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print(f"{func.__name__} took {execution_time:.6f} seconds to execute.")
+        return result
+    return wrapper
 
 
 @st.cache_data
@@ -149,6 +160,13 @@ def setup_session_states():
     if 'live_state' not in session_state:
         session_state['live_state'] = 0
 
+    if 'display_details' not in session_state:
+        session_state['display_details'] = False
+
+    if 'authenticator' not in session_state:
+        session_state['authenticator'] = None
+
+
 
     #reset sub key if returned to dashboard
     #session_state.sub_key=False
@@ -171,6 +189,29 @@ def setup_colour_themes()-> dict:
     customer_colour_map = {group: colours[group] for group in colours}
 
     return customer_colour_map
+
+
+def update_region_state():
+    # Get the current time
+    current_time = datetime.now()
+    seconds = current_time.second
+
+    logging.info(f"Seconds: {seconds}")
+
+    # Define the time ranges and corresponding values
+    time_ranges_values = [
+        (0, 12, 0),
+        (13, 24, 1),
+        (25, 36, 2),
+        (37, 48, 3),
+        (49, 60, 4)
+    ]
+
+    # Check which range the seconds fall into and set the corresponding value
+    for range_start, range_end, value in time_ranges_values:
+        if range_start <= seconds <= range_end:
+            session_state.live_state = value
+            break
 
 '''
 GET FUNCTIONS TO SQL DB
@@ -407,6 +448,10 @@ def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
     #drop date columns
     billing_df.drop(['bill_run_end_date'],axis=1, inplace=True)
 
+    #update Joinpro and chemist warehouse if needed
+    billing_df['master_customer'].replace({'JOINPRO AUSTRALIA PTY LTD':'Joinpro Australia Pty Ltd',
+                                           'Chemist Warehouse ': 'Chemist Warehouse Pty Ltd'},inplace=True)
+
     return billing_df
 
 @st.cache_data
@@ -436,8 +481,7 @@ def get_nmi_list()-> list:
         list: list of nmis
     """
 
-    #get current date
-    current_day = date.today().strftime("%Y-%m-%d")
+
 
     #setup query
     table_name="mtae_ops_billing_nmi_standing_data_prod"
@@ -445,7 +489,23 @@ def get_nmi_list()-> list:
 
     #get customer data
     customer_df=sql_con.query_sql(query=query,database='standingdata')
-    customer_nmis =  customer_df['nmi'].unique().tolist()
+    nmi_list =  customer_df['nmi'].unique().tolist()
+
+    return nmi_list
+
+@st.cache_data
+def check_active_nmi(nmi: str) ->bool:
+    """Summary of check_active_nmi: Function to check if nmi is active as of today
+
+    Args:
+        nmi (str): nmi to check
+
+    Returns:
+        bool: True if active, False if not active
+    """
+
+    #get current date
+    current_day = date.today().strftime("%Y-%m-%d")
 
     #get data with nmi frmp data
     table_name= "mtae_ops_nmi_frmp_dates"
@@ -458,10 +518,11 @@ def get_nmi_list()-> list:
     #get list of active nmi's
     active_nmi_list=active_nmis_df['nmi'].unique().tolist()
 
-    #determine the intersection between customer nmi list and active nmi list
-    nmi_list = list(set(customer_nmis) & set(active_nmi_list))
-
-    return nmi_list
+    #check if nmi is in active list
+    if nmi in active_nmi_list:
+        return True
+    else:
+        return False
 
 @st.cache_data
 def get_nmi_msats_data(nmi: str) -> pd.DataFrame:
@@ -554,7 +615,7 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
     return nmi_participants_df
 
 
-def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
+def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch pricedata for the market
 
     Args:
@@ -567,22 +628,20 @@ def get_dispatch_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_dispatch_price"
     timezone_add = 10 #need to set to convert UTC to AEST
-    query = (f"SELECT * FROM {table_name} "
+    query = (f"SELECT SETTLEMENTDATE,REGIONID,RRP FROM {table_name} "
              f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
-             f"AND REGIONID = '{region_id}' "
-             f"ORDER BY SETTLEMENTDATE desc")
+             f"ORDER BY SETTLEMENTDATE asc")
     
     #get dispatch data
     dispatch_df=sql_con.query_sql(query=query,database='timeseries')
 
     return dispatch_df
 
-def get_dispatch_demand_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
+def get_dispatch_demand_data(lookback_hours: int)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch demand data for the market
 
     Args:
         lookback_hours (int): number of hours to lookback
-        region_id (str): region to get dispatch data for
 
     Returns:
         pd.DataFrame: dataframe of dispatch data
@@ -591,10 +650,9 @@ def get_dispatch_demand_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_dispatch_demand"
     timezone_add = 10 #need to set to convert UTC to AEST
-    query = (f"SELECT * FROM {table_name} "
+    query = (f"SELECT SETTLEMENTDATE,REGIONID,TOTALDEMAND,AVAILABLEGENERATION FROM {table_name} "
              f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
-             f"AND REGIONID = '{region_id}' "
-             f"ORDER BY SETTLEMENTDATE desc")
+             f"ORDER BY SETTLEMENTDATE asc")
     
     #get dispatch data
     dispatch_df=sql_con.query_sql(query=query,database='timeseries')
@@ -602,11 +660,8 @@ def get_dispatch_demand_data(lookback_hours: int, region_id:str)-> pd.DataFrame:
     return dispatch_df
 
 
-def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
+def get_predispatch_data_30min()-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 30min intervals
-
-    Args:
-        lookback_hours (int): number of hours to lookback
 
     Returns:
         pd.DataFrame: dataframe of predispatch data
@@ -614,9 +669,8 @@ def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
 
     #setup query
     table_name="aemo_emms_predispatch_30min"
-    query = (f"SELECT * FROM {table_name} "
+    query = (f"SELECT PRED_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION FROM {table_name} "
              f"WHERE DATETIME = (SELECT MAX(DATETIME) FROM {table_name}) "
-             f"AND REGIONID = '{region_id}' "
              f"ORDER BY PRED_DATETIME asc")
     
     #get predispatch data
@@ -625,11 +679,8 @@ def get_predispatch_data_30min(region_id:str)-> pd.DataFrame:
     return predispatch_df
 
 
-def get_predispatch_data_5min(region_id: str)-> pd.DataFrame:
+def get_predispatch_data_5min()-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 5min intervals
-
-    Args:
-        region_id (str): region to get predispatch data for
 
     Returns:
         pd.DataFrame: dataframe of predispatch data
@@ -637,9 +688,8 @@ def get_predispatch_data_5min(region_id: str)-> pd.DataFrame:
 
     #setup query
     table_name="aemo_emms_predispatch_5min"
-    query = (f"SELECT * FROM {table_name} "
+    query = (f"SELECT INTERVAL_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION,SS_SOLAR_UIGF,SS_WIND_UIGF FROM {table_name} "
              f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})"
-             f"AND REGIONID = '{region_id}' "
              f"ORDER BY INTERVAL_DATETIME asc")
     
     #get predispatch data
@@ -773,6 +823,11 @@ def clear_flag():
     """_summary_: Function to clear the flag for the push button
     """
     session_state.sub_key=False
+
+def set_flag():
+    """_summary_: Function to clear the flag for the push button
+    """
+    session_state.display_details=True
     
 @st.cache_data
 def convert_df(df: pd.DataFrame)->bytes:
@@ -785,7 +840,7 @@ def convert_df(df: pd.DataFrame)->bytes:
         bytes: csv file
     """
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
-    return df.to_csv().encode('utf-8')
+    return df.to_csv(encoding='utf-8').encode('utf-8')
 
 @st.cache_resource
 def startup_site():

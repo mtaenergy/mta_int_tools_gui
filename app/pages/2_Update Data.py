@@ -22,6 +22,10 @@ update_options=['Select option to update', 'Update NMI Details']
 global_nmi_list =['Select a NMI']
 global_nmi_list=global_nmi_list+get_nmi_list()
 
+#clear flag to display NMI details
+session_state.display_details=False
+session_state.live_state=0
+
 # Page : Update Data
 
 def update_nmi_sd():
@@ -70,7 +74,7 @@ def update_page():
     if session_state.authentication_status:
 
         # #configure sidebar
-        # authenticator.logout("Logout","sidebar",key='unique_key')
+        session_state.authenticator.logout("Logout","sidebar",key='unique_key')
         st.sidebar.title(f"Welcome {st.session_state['name']}")
 
 
