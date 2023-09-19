@@ -698,6 +698,18 @@ def get_predispatch_data_5min()-> pd.DataFrame:
     return predispatch_df
 
 
+@st.cache_data
+def get_solar_generation_data(site: str)-> pd.DataFrame:
+    table_name='mtae_ops_solar_generated_5min'
+    query=(f"SELECT datetime,energy_generated_kwh FROM {table_name} "
+           f"WHERE site_name='{site}'")
+    
+    #get solae data
+    solar_df=sql_con.query_sql(query=query,database='timeseries')
+
+    #return solar_df
+    return solar_df
+
 ## SITE ALIAS FUNCTIONS
 
 @st.cache_data
@@ -817,6 +829,17 @@ def get_site_id(nmi: str)->str:
 
     return site_id
     
+@st.cache_data
+def get_solar_sites()-> pd.DataFrame:
+    table_name='mtae_ops_client_solar_sites'
+    query=(f"SELECT * FROM {table_name}")
+
+    #get solar site data
+    solar_sites_df=sql_con.query_sql(query=query,database='standing_data')
+
+    return solar_sites_df
+
+
 
 ## PUSH FUNCTIONS
 def clear_flag():
