@@ -29,7 +29,7 @@ session_state.live_state=0
 
 
 # Page: NMI Details
-
+@measure_execution_time
 def nmi_page():
 
     

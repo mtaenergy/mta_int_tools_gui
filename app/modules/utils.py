@@ -14,12 +14,21 @@ from geopy.geocoders import Nominatim
 import streamlit_authenticator as stauth
 import pickle
 import json
+import time
 
 
 current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
 
-
+def measure_execution_time(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print(f"{func.__name__} took {execution_time:.6f} seconds to execute.")
+        return result
+    return wrapper
 
 
 @st.cache_data

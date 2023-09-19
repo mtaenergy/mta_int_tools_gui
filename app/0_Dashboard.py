@@ -56,6 +56,7 @@ def login():
 
 
 #setup function for home page
+@measure_execution_time
 def home_page():
 
     if session_state.authentication_status:
@@ -63,8 +64,8 @@ def home_page():
         session_state.authenticator.logout("Logout","sidebar",key='unique_key')
         st.sidebar.title(f"Welcome {session_state.name}")
 
-        #run app
 
+        #container for logo
         with st.container():
             col1, col2, col3 = st.columns(3)
 
@@ -76,13 +77,10 @@ def home_page():
         #container for lookback selector
         with st.container():
             elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year", "Last FY", "FY to date"))
-            logging.info(elected_period)
 
             # collect billing df based on elected period
             columns='[nmi],[total_cost_ex_gst],[charge_group],[charge_name],[volume],[scaling_factor],[loss_factor]'
             billing_df=get_billing_records_prod_df(columns=columns, lookback_op=elected_period)
-
-            #
 
         #container to select  customer
         with st.container():
@@ -94,7 +92,9 @@ def home_page():
                 client_list = billing_df['master_customer'].unique().tolist()
                 customer_sel= st.multiselect(label='Filter by customer',options=client_list)
                 if customer_sel!=[]:
-                    billing_df = billing_df[billing_df['master_customer'].isin(customer_sel)]
+                    customer_df = billing_df[billing_df['master_customer'].isin(customer_sel)]
+                else:
+                    customer_df=billing_df.copy()
 
         #container for high level statistics
         with st.container():
@@ -104,14 +104,14 @@ def home_page():
 
             with col1:
                 #number of serviced sites
-                num_sites = len(billing_df['nmi'].unique().tolist())
+                num_sites = len(customer_df['nmi'].unique().tolist())
 
                 st.metric('Number of serviced sites',num_sites)
 
             with col2:
 
                 #group by master customer to get cost per customer
-                cost_df = billing_df.groupby('master_customer').sum()
+                cost_df = customer_df.groupby('master_customer').sum()
 
                 #total costs
                 total_cost = cost_df['total_cost_ex_gst'].sum()
@@ -123,7 +123,7 @@ def home_page():
 
             with col3:
                 #filter for only rows with Commodity as charge group
-                consump_df = billing_df.loc[billing_df['charge_group']=='Commodity']
+                consump_df = customer_df.loc[customer_df['charge_group']=='Commodity']
                 consump_df = consump_df.groupby('master_customer').sum()
 
                 #total consump
@@ -137,7 +137,7 @@ def home_page():
             with col4:
 
                 #filter for only rows with Carbon as charge name
-                carbon_df = billing_df[billing_df['charge_name']=='Carbon'].copy()
+                carbon_df = customer_df[customer_df['charge_name']=='Carbon'].copy()
 
                 #create new column which is the multiplication of volume, loss factor and scaling factor
                 carbon_df['carbon_ton'] = carbon_df['volume']*carbon_df['scaling_factor']*carbon_df['loss_factor']/1000
@@ -152,7 +152,6 @@ def home_page():
                 #total carbon
                 st.metric("Total Carbon Emissions ton",total_carbon_str)
 
-
         #container with overview charts
         with st.container():
 
@@ -164,7 +163,7 @@ def home_page():
             with col1:
 
                 fig = px.pie(cost_df, names=cost_df.index, values='total_cost_ex_gst', color=cost_df.index,
-                             title = 'Total Cost ex GST by Customer',color_discrete_map=customer_colours_map)
+                            title = 'Total Cost ex GST by Customer',color_discrete_map=customer_colours_map)
                 
 
                 st.plotly_chart(fig, use_container_width=True)
@@ -172,14 +171,14 @@ def home_page():
             with col2:
 
                 fig = px.pie(cost_df, names=consump_df.index, values='volume', color=cost_df.index,
-                             title = 'Total Consumption kWh by Customer',color_discrete_map=customer_colours_map)
+                            title = 'Total Consumption kWh by Customer',color_discrete_map=customer_colours_map)
 
                 st.plotly_chart(fig, use_container_width=True)
 
             with col3:
 
                 fig = px.pie(carbon_df, names=carbon_df.index, values='carbon_ton', color=cost_df.index,
-                             title = 'Total Carbon tons by Customer',color_discrete_map=customer_colours_map)
+                            title = 'Total Carbon tons by Customer',color_discrete_map=customer_colours_map)
                 
                 #GnBu_r
 
@@ -188,7 +187,7 @@ def home_page():
         #container with vwap per customer
         with st.container():
 
-            billing_commodity = billing_df[billing_df['charge_group'] == 'Commodity']
+            billing_commodity = customer_df[customer_df['charge_group'] == 'Commodity']
 
             vwap_df = pd.DataFrame({
                 'commod_$': billing_commodity.groupby('master_customer')['total_cost_ex_gst'].sum(),
@@ -198,16 +197,15 @@ def home_page():
             vwap_df['vwap_commod'] = vwap_df['commod_$'] / vwap_df['commod_kwh'] * 100
 
             fig = px.bar(vwap_df, x=vwap_df['master_customer'], y='vwap_commod', 
-                             title = 'VWAP Commodity by Customer',
-                             labels={
-                                 'master_customer': 'Customer',
-                                 'vwap_commod': 'Commodity VWAP c/kWh'
-                             })
+                            title = 'VWAP Commodity by Customer',
+                            labels={
+                                'master_customer': 'Customer',
+                                'vwap_commod': 'Commodity VWAP c/kWh'
+                            })
             
             fig.update_traces(marker_color='#35ABDE')
             
             st.plotly_chart(fig, use_container_width=True)
-
 
 
 setup_session_states()
@@ -215,4 +213,5 @@ setup_session_states()
 if not session_state.authentication_status:
     login()
 else:
+    
     home_page()

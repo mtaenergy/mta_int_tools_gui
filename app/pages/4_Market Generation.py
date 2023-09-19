@@ -9,7 +9,7 @@ from PIL import Image
 from streamlit_autorefresh import st_autorefresh
 import logging
 
-from modules.utils import get_dispatch_demand_data, get_predispatch_data_30min, get_predispatch_data_5min, setup_session_states
+from modules.utils import get_dispatch_demand_data, get_predispatch_data_30min, get_predispatch_data_5min, setup_session_states, measure_execution_time
 
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
@@ -138,7 +138,7 @@ def display_gen_view(state:str)->None:
     
             display_gen_data(state=state)
 
-
+@measure_execution_time
 def generation_page():
     if session_state.authentication_status:
         session_state.authenticator.logout("Logout","sidebar",key='unique_key')

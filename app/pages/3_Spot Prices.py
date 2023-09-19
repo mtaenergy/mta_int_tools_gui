@@ -8,7 +8,7 @@ from streamlit import session_state
 from streamlit_autorefresh import st_autorefresh
 import logging 
 
-from modules.utils import get_dispatch_data, get_predispatch_data_30min, get_predispatch_data_5min, setup_session_states
+from modules.utils import get_dispatch_data, get_predispatch_data_30min, get_predispatch_data_5min, setup_session_states, measure_execution_time
 
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
@@ -134,6 +134,7 @@ def display_df_info(df: pd.DataFrame,option: str) -> None:
     # set each metric to be 2 dp
     st.table(metrics_df.applymap('{:.2f}'.format))
 
+@measure_execution_time
 def spot_price_page():
     if session_state.authentication_status:
         session_state.authenticator.logout("Logout","sidebar",key='unique_key')
