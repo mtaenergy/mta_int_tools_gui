@@ -213,6 +213,13 @@ def update_region_state():
             session_state.live_state = value
             break
 
+def replace_entry(entry, search_string: str, replace_string: str):
+    if search_string not in entry:
+        return replace_string
+    else:
+        return entry
+
+
 '''
 GET FUNCTIONS TO SQL DB
 '''
@@ -699,16 +706,26 @@ def get_predispatch_data_5min()-> pd.DataFrame:
 
 
 @st.cache_data
-def get_solar_generation_data(site: str)-> pd.DataFrame:
+def get_solar_generation_data(site: str, start_date: str, end_date: str)-> pd.DataFrame:
     table_name='mtae_ops_solar_generated_5min'
-    query=(f"SELECT datetime,energy_generated_kwh FROM {table_name} "
-           f"WHERE site_name='{site}'")
+    query=(f"SELECT datetime,energy_generated_kwh, site_name  FROM {table_name} "
+            f"WHERE datetime >= '{start_date}' "
+            f"AND datetime <= '{end_date}'")
     
     #get solae data
     solar_df=sql_con.query_sql(query=query,database='timeseries')
 
     #convert datetime to pandas datetime
     solar_df['datetime']=pd.to_datetime(solar_df['datetime'])
+
+    #if the entry doesn't have 'Bingo' in column site_name, replace with Toll Bungaribee 400kW
+    solar_df['site_name'] = solar_df['site_name'].apply(lambda x: replace_entry(x, search_string='Bingo', replace_string='Toll Bungaribee 400kW'))
+
+    #groupby datetime and site_name and sum energy_generated_kwh
+    solar_df=solar_df.groupby(['datetime','site_name']).sum().reset_index()
+
+    #filter for site
+    solar_df=solar_df[solar_df['site_name']==site]
 
     #return solar_df
     return solar_df

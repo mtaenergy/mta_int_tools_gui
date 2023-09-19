@@ -34,8 +34,10 @@ def dislay_solar_data(solar_sites_list: list):
 
 
     #get solar data df
-    solar_df = get_solar_generation_data(site=site)
+    solar_df = get_solar_generation_data(site=site, start_date=start_date, end_date=end_date)
 
+
+    #get electricity consumption df
 
     #filter for date range
     solar_df = solar_df[(solar_df['datetime']>=start_date) & (solar_df['datetime']<=end_date)]
@@ -74,6 +76,7 @@ def solar_page():
         #get solar sites df
         solar_sites_df = get_solar_sites()
         solar_sites_list = solar_sites_df['site_name'].unique().tolist()
+        solar_sites_list.remove('Toll Bungaribee 400kW (LGC Meter)')
 
         #display solar data
         dislay_solar_data(solar_sites_list)
