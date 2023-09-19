@@ -8,12 +8,17 @@ from streamlit import session_state
 from PIL import Image
 from streamlit_autorefresh import st_autorefresh
 import logging
-from modules.utils import setup_session_states, measure_execution_time, get_solar_generation_data, clear_flag, get_solar_sites
+from modules.utils import setup_session_states, measure_execution_time, get_solar_generation_data, clear_flag, get_solar_sites,get_site_id, api_con
+from mtatk.mta_class_nmi import NMI
 
 img_path = "app/imgs/400dpiLogo.jpg"
 
 
-def dislay_solar_data(solar_sites_list: list):
+def dislay_solar_data(solar_sites_df: pd.DataFrame):
+
+    #solar site list
+    solar_sites_list = solar_sites_df['site_name'].unique().tolist()
+    solar_sites_list.remove('Toll Bungaribee 400kW (LGC Meter)')
     
 
     #container to store date and store selection
@@ -22,11 +27,11 @@ def dislay_solar_data(solar_sites_list: list):
 
         with col1:
             start_date=st.date_input("Start Date",value=pd.to_datetime('today')-pd.Timedelta(days=1), on_change=clear_flag())
-            start_date=pd.to_datetime(start_date)
+            start_date_dt=pd.to_datetime(start_date)
 
         with col2:
             end_date=st.date_input("End Date",value=pd.to_datetime('today'),on_change=clear_flag())
-            end_date=pd.to_datetime(end_date)
+            end_date_dt=pd.to_datetime(end_date)
 
         with col3:
             site=st.selectbox("Select a site",options=solar_sites_list,on_change=clear_flag())
@@ -36,24 +41,69 @@ def dislay_solar_data(solar_sites_list: list):
     #get solar data df
     solar_df = get_solar_generation_data(site=site, start_date=start_date, end_date=end_date)
 
+    #get nmi for chosen site
+    nmi = solar_sites_df[solar_sites_df['site_name']==site]['nmi'].values[0]
 
-    #get electricity consumption df
+    #get NMI object
+    nmi_obj = NMI(nmi=nmi, start_date=start_date, end_date=end_date,api_con = api_con)
+
+    #get consumption data
+    consumption_ser = nmi_obj.meter_data.consumption_kwh
 
     #filter for date range
-    solar_df = solar_df[(solar_df['datetime']>=start_date) & (solar_df['datetime']<=end_date)]
+    solar_df = solar_df[(solar_df['datetime']>=start_date_dt) & (solar_df['datetime']<=end_date_dt)]
 
     #dislay in line chart
     with st.container():
-        fig = px.line(solar_df, x='datetime', y='energy_generated_kwh', title=f"Generation for {site}")
-        fig.update_layout(
-            xaxis_title="Date",
-            yaxis_title="Generation (kWh)",
-            legend_title="Legend Title"
+        fig =go.Figure()
+        fig.add_trace(go.Scatter(x=solar_df['datetime'], y=solar_df['energy_generated_kwh'], mode='lines', name='Solar Generation kWh'))
+        fig.add_trace(go.Scatter(x=solar_df['datetime'], y=consumption_ser, mode='lines', name='Grid Consumption kWh'))
+        
+        #update legend position
+        fig.update_layout(legend=dict(
+            yanchor="top",
+            y=1.1,
+            x=0,
+            orientation='h'
+        ),
+        yaxis_title='kWh'
         )
+        
         st.plotly_chart(fig, use_container_width=True)
 
-def display_solar_site_details(site: str = None):
-    pass
+    #display solar metrics
+    with st.container():
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+
+            #display total solar generation
+            total_solar_gen = solar_df['energy_generated_kwh'].sum().round(2)
+            st.metric("Total Solar Generation kWh",total_solar_gen)
+
+        with col2:
+            #display peak generation
+            peak_gen = solar_df['energy_generated_kwh'].max().round(2)
+            st.metric("Peak Generation kWh",peak_gen)
+
+
+    #display site details
+    with st.container():
+        display_df = solar_sites_df[solar_sites_df['site_name']==site][['site_name','nmi','site_id','data_source']].copy()
+
+        #drop duplicates
+        display_df.drop_duplicates(inplace=True)
+
+        #rename columns for dislay
+        display_df.rename(columns={'site_name':'Site Name','nmi':'NMI','site_id':'Site ID','data_source':'Data Source'}, inplace=True)
+
+        #transpose df
+        display_df = display_df.T
+
+        st.table(display_df)
+        
+
 
 
 def solar_page():
@@ -75,14 +125,10 @@ def solar_page():
 
         #get solar sites df
         solar_sites_df = get_solar_sites()
-        solar_sites_list = solar_sites_df['site_name'].unique().tolist()
-        solar_sites_list.remove('Toll Bungaribee 400kW (LGC Meter)')
 
         #display solar data
-        dislay_solar_data(solar_sites_list)
+        dislay_solar_data(solar_sites_df)
 
-        #display solar site details
-        display_solar_site_details()
 
 
 setup_session_states()
