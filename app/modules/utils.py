@@ -213,6 +213,13 @@ def update_region_state():
             session_state.live_state = value
             break
 
+def replace_entry(entry, search_string: str, replace_string: str):
+    if search_string not in entry:
+        return replace_string
+    else:
+        return entry
+
+
 '''
 GET FUNCTIONS TO SQL DB
 '''
@@ -659,7 +666,6 @@ def get_dispatch_demand_data(lookback_hours: int)-> pd.DataFrame:
 
     return dispatch_df
 
-
 def get_predispatch_data_30min()-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 30min intervals
 
@@ -677,7 +683,6 @@ def get_predispatch_data_30min()-> pd.DataFrame:
     predispatch_df=sql_con.query_sql(query=query,database='timeseries')
 
     return predispatch_df
-
 
 def get_predispatch_data_5min()-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 5min intervals
@@ -697,6 +702,54 @@ def get_predispatch_data_5min()-> pd.DataFrame:
 
     return predispatch_df
 
+@st.cache_data
+def get_solar_generation_data(site: str, start_date: str, end_date: str)-> pd.DataFrame:
+    table_name='mtae_ops_solar_generated_5min'
+
+    #if the site is bungaribee
+    if site == 'Toll Bungaribee 400kW':
+        query=(f"SELECT datetime,energy_generated_kwh, site_name  FROM {table_name} "
+                f"WHERE datetime >= '{start_date}' "
+                f"AND datetime <= '{end_date}' "
+                f"AND site_id = 'cb8121b3-6a74-4e8c-8ab3-11bc49a1fb8f'") #search for the specific site id for bungaribee
+    else:
+        query=(f"SELECT datetime,energy_generated_kwh, site_name  FROM {table_name} "
+            f"WHERE datetime >= '{start_date}' "
+            f"AND datetime <= '{end_date}' "
+            f"AND site_name = '{site}'") #search for the specific site id for bungaribee
+
+    
+    #get solar data
+    solar_df=sql_con.query_sql(query=query,database='timeseries')
+
+    #convert datetime to pandas datetime
+    solar_df['datetime']=pd.to_datetime(solar_df['datetime'])
+
+    #if the entry doesn't have 'Bingo' in column site_name, replace with Toll Bungaribee 400kW
+    solar_df['site_name'] = solar_df['site_name'].apply(lambda x: replace_entry(x, search_string='Bingo', replace_string='Toll Bungaribee 400kW'))
+
+    #groupby datetime and site_name and sum energy_generated_kwh
+    solar_df=solar_df.groupby(['datetime','site_name']).sum().reset_index()
+
+
+    #return solar_df
+    return solar_df
+
+@st.cache_data
+def get_nem12_data(nmi: str, start_date: str, end_date: str, nmi_suffix: str = None)-> pd.DataFrame:
+    table_name= 'aemo_msats_mtrd_nem12_prod'
+    if nmi_suffix is not None:
+        query = (f"SELECT settlement_datetime, reading, nmi, nmi_suffix FROM {table_name} "
+                f"WHERE nmi = '{nmi}' and settlement_datetime >= '{start_date}' "
+                f"and settlement_datetime < '{end_date}' and nmi_suffix = '{nmi_suffix}'")
+    else:
+        query = (f"SELECT settlement_datetime, reading, nmi, nmi_suffix FROM {table_name} "
+            f"WHERE nmi = '{nmi}' and settlement_datetime >= '{start_date}' "
+            f"and settlement_datetime < '{end_date}'")
+        
+    nem12_df = sql_con.query_sql(query=query,database='timeseries')
+
+    return nem12_df
 
 ## SITE ALIAS FUNCTIONS
 
@@ -817,6 +870,17 @@ def get_site_id(nmi: str)->str:
 
     return site_id
     
+@st.cache_data
+def get_solar_sites()-> pd.DataFrame:
+    table_name='mtae_ops_client_solar_sites'
+    query=(f"SELECT * FROM {table_name}")
+
+    #get solar site data
+    solar_sites_df=sql_con.query_sql(query=query,database='standingdata')
+
+    return solar_sites_df
+
+
 
 ## PUSH FUNCTIONS
 def clear_flag():
