@@ -43,20 +43,14 @@ def dislay_solar_data(solar_sites_df: pd.DataFrame):
     # raise error if start date is after end date
     if start_date > end_date:
         st.error("Start date must be before end date")
-        st.error(f"Start date: {start_date}")
-        st.error(f"End date: {end_date}")
         return
 
     
-
     #get solar data df
     solar_df = get_solar_generation_data(site=site, start_date=start_date, end_date=end_date)
 
     #get nmi for chosen site
     nmi = solar_sites_df[solar_sites_df['site_name']==site]['nmi'].values[0]
-
-    # #get NMI object
-    # nmi_obj = NMI(nmi=nmi, start_date=start_date, end_date=end_date,api_con = api_con)
 
     #get consumption data
     consumption_df = get_nem12_data(nmi=nmi, start_date=start_date, end_date=end_date, nmi_suffix='export_kwh')
@@ -101,22 +95,28 @@ def dislay_solar_data(solar_sites_df: pd.DataFrame):
 
     #display site details
     with st.container():
-        display_df = solar_sites_df[solar_sites_df['site_name']==site][['site_name','nmi','site_id','data_source']].copy()
+        display_df = solar_sites_df[solar_sites_df['site_name']==site][['site_name','nmi','site_id','data_source',
+                                                                        'capacity_kw','mta_lgc_site']].copy()
 
         #drop duplicates
         display_df.drop_duplicates(inplace=True)
 
+        #if bungaribee, replace capacity with 27*16
+        if site == 'Toll Bungaribee 400kW':
+            display_df['capacity_kw'] = 27*16
+
         #rename columns for dislay
-        display_df.rename(columns={'site_name':'Site Name','nmi':'NMI','site_id':'Site ID','data_source':'Data Source'}, inplace=True)
+        display_df.rename(columns={'site_name':'Site Name','nmi':'NMI','site_id':'Site ID',
+                                   'data_source':'Data Source','capacity_kw': 'Capacity-kW',
+                                   'mta_lgc_site': 'MTA LGC Site'}, inplace=True)
 
         #transpose df
-        display_df = display_df.T
+        #display_df = display_df.T
 
-        st.table(display_df)
+        st.dataframe(display_df, use_container_width=True,hide_index=True)
         
 
-
-
+@measure_execution_time
 def solar_page():
     if session_state.authentication_status:
         session_state.authenticator.logout("Logout","sidebar",key='unique_key')
@@ -139,7 +139,6 @@ def solar_page():
 
         #display solar data
         dislay_solar_data(solar_sites_df)
-
 
 
 
