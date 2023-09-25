@@ -99,8 +99,34 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
                 
         st.plotly_chart(fig, use_container_width=True)
 
+
+    #display temp metrics
     with st.container():
-        #ploty fig for relative humid
+        
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+
+            #display max temperature
+            max_temp = temp_df['temp'].max().round(2)
+            st.metric("Max Temperature (C)",max_temp)
+
+        with col2:
+            #display min temperature
+            min_temp = temp_df['temp'].min().round(2)
+            st.metric("Min Temperature (C)",min_temp)
+
+        with col3:
+            #display average temperature
+            mean_temp = temp_df['temp'].mean().round(2)
+            st.metric("Average Temperature (C)",mean_temp)
+
+###############################################################################################
+
+    #ploty fig for relative humid
+    with st.container():
+
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=consumption_df['settlement_datetime'], y=consumption_df['reading'], name='Grid Consumption kWh',marker_color='#085A9D',fill='tozeroy',yaxis="y1"))
         fig.add_trace(go.Scatter(x=temp_df['datetime'], y=temp_df['rel_hum'], mode='lines', name='Relative Humidity %',marker_color='#e37474',yaxis='y2'))
@@ -151,19 +177,19 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
 
         with col1:
 
-            #display max temperature
-            max_temp = temp_df['temp'].max().round(2)
-            st.metric("Max Temperature (C)",max_temp)
+            #display max humidity
+            max_hum = temp_df['rel_hum'].max().round(2)
+            st.metric("Max Humidity %",max_hum)
 
         with col2:
-            #display min temperature
-            min_temp = temp_df['temp'].min().round(2)
-            st.metric("Min Temperature (C)",min_temp)
+            #display min humidity
+            min_hum = temp_df['rel_hum'].min().round(2)
+            st.metric("Min Humidity %",min_hum)
 
         with col3:
-            #display average temperature
-            mean_temp = temp_df['temp'].mean().round(2)
-            st.metric("Average Temperature (C)",mean_temp)
+            #display average humidity
+            mean_hum = temp_df['rel_hum'].mean().round(2)
+            st.metric("Average Humidity %",mean_hum)
 
 
     #display site details
@@ -182,7 +208,7 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
     
 
 @measure_execution_time
-def temperature_page():
+def meteorological_page():
     if session_state.authentication_status:
         session_state.authenticator.logout("Logout","sidebar",key='unique_key')
 
@@ -197,7 +223,7 @@ def temperature_page():
         st.sidebar.title(f"Welcome {st.session_state['name']}")
 
         #set header
-        st.header(f"Site Temperature vs Electricity Consumption")
+        st.header(f"Site Meteorological Data")
 
         #get weather sites df
         weather_sites_df = get_weather_sites()
@@ -207,4 +233,4 @@ def temperature_page():
 
 
 setup_session_states()
-temperature_page()
+meteorological_page()
