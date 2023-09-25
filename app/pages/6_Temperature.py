@@ -25,13 +25,11 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
 
         with col1:
             start_date=st.date_input("Start Date",value=pd.to_datetime('today')-pd.Timedelta(days=3))
-            start_date_dt=pd.to_datetime(start_date)
 
         with col2:
             end_date=st.date_input("End Date",value=pd.to_datetime('today')-pd.Timedelta(days=2))
             #add 1 day to end date
             end_date=end_date+pd.Timedelta(days=1)
-            end_date_dt=pd.to_datetime(end_date)
 
         with col3:
             nmi=st.selectbox("Select a site",options=sites_list)
@@ -43,7 +41,6 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
         st.error("Start date must be before end date")
         return
 
-    
     #get temp data df
     temp_df = get_temperature_data(site=site, start_date=start_date, end_date=end_date)
 
@@ -53,24 +50,52 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
     #get consumption data
     consumption_df = get_nem12_data(nmi=nmi, start_date=start_date, end_date=end_date, nmi_suffix='export_kwh')
 
+    #resample datetime into 30min buckets
+    #consumption_df = consumption_df.resample('30min', on='settlement_datetime').sum().reset_index()
+
 
     #dislay in line chart
     with st.container():
-        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        fig = go.Figure()
         #fig.add_trace(go.Scatter(x=temp_df['datetime'], y=temp_df['rel_hum'], mode='lines', name='Relative Humidity %'))
-        fig.add_trace(go.Bar(x=temp_df['datetime'], y=consumption_df['reading'], name='Grid Consumption kWh'),secondary_y=True)
-        fig.add_trace(go.Scatter(x=temp_df['datetime'], y=temp_df['temp'], mode='lines', name='Temperature C'),secondary_y=False)
+        fig.add_trace(go.Scatter(x=consumption_df['settlement_datetime'], y=consumption_df['reading'], name='Grid Consumption kWh',marker_color='#085A9D',fill='tozeroy',yaxis="y1"))
+        fig.add_trace(go.Scatter(x=temp_df['datetime'], y=temp_df['temp'], mode='lines', name='Temperature C',marker_color='#FFBF74',yaxis='y2'))
+        
+        
         
         #update legend position
-        fig.update_layout(legend=dict(
-            yanchor="top",
-            y=1.1,
-            x=0,
-            orientation='h')
+        fig.update_layout(
+            legend=dict(
+                yanchor="top",
+                y=1.1,
+                x=0,
+                orientation='h'
+            ),
+
+            yaxis=dict(
+                title="kWh",
+                titlefont=dict(
+                    color="#4C6271"
+                ),
+                tickfont=dict(
+                    color="#4C6271"
+                )
+            ),
+
+            yaxis2=dict(
+                title="Celsius C",
+                titlefont=dict(
+                    color="#4C6271"
+                ),
+                tickfont=dict(
+                    color="#4C6271"
+                ),
+                anchor="x",
+                overlaying="y",
+                side="right",
+                position=1
+            )
         )
-        # Set y-axes titles
-        fig.update_yaxes(title_text="<b>C</b>", secondary_y=False)
-        fig.update_yaxes(title_text="<b>kWh</b>", secondary_y=True)
                 
         st.plotly_chart(fig, use_container_width=True)
 
