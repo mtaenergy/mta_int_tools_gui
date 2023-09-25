@@ -736,6 +736,25 @@ def get_solar_generation_data(site: str, start_date: str, end_date: str)-> pd.Da
     return solar_df
 
 @st.cache_data
+def get_temperature_data(site: str, start_date: str, end_date: str)-> pd.DataFrame:
+    table_name='mtae_ops_temp_60min'
+
+    query=(f"SELECT datetime,temp, rel_hum, site_alias  FROM {table_name} "
+        f"WHERE datetime >= '{start_date}' "
+        f"AND datetime <= '{end_date}' "
+        f"AND site_alias = '{site}'")
+
+    #get temp data
+    temp_df=sql_con.query_sql(query=query,database='timeseries')
+
+    #convert datetime to pandas datetime
+    temp_df['datetime']=pd.to_datetime(temp_df['datetime'])
+
+    #return temp_df
+    return temp_df
+
+
+@st.cache_data
 def get_nem12_data(nmi: str, start_date: str, end_date: str, nmi_suffix: str = None)-> pd.DataFrame:
     table_name= 'aemo_msats_mtrd_nem12_prod'
     if nmi_suffix is not None:
@@ -880,7 +899,15 @@ def get_solar_sites()-> pd.DataFrame:
 
     return solar_sites_df
 
+@st.cache_data
+def get_weather_sites()-> pd.DataFrame:
+    table_name='mtae_ops_nmi_weather_stations'
+    query=(f"SELECT nmi, master_customer, site_alias, site_address, weather_stat_name FROM {table_name}")
 
+    #get weather site data
+    weather_sites_df=sql_con.query_sql(query=query,database='standingdata')
+
+    return weather_sites_df
 
 ## PUSH FUNCTIONS
 def clear_flag():
