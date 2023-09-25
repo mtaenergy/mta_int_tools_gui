@@ -44,15 +44,16 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
     #get temp data df
     temp_df = get_temperature_data(site=site, start_date=start_date, end_date=end_date)
 
+    #if temp data empty raise error
+    if temp_df.empty:
+        st.error("No temperature data available for selected date range")
+        return
+
     #sort by datetime
     temp_df.sort_values(by='datetime',inplace=True)
 
     #get consumption data
     consumption_df = get_nem12_data(nmi=nmi, start_date=start_date, end_date=end_date, nmi_suffix='export_kwh')
-
-    #resample datetime into 30min buckets
-    #consumption_df = consumption_df.resample('30min', on='settlement_datetime').sum().reset_index()
-
 
     #dislay in line chart
     with st.container():
@@ -61,8 +62,7 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
         fig.add_trace(go.Scatter(x=consumption_df['settlement_datetime'], y=consumption_df['reading'], name='Grid Consumption kWh',marker_color='#085A9D',fill='tozeroy',yaxis="y1"))
         fig.add_trace(go.Scatter(x=temp_df['datetime'], y=temp_df['temp'], mode='lines', name='Temperature C',marker_color='#FFBF74',yaxis='y2'))
         
-        
-        
+    
         #update legend position
         fig.update_layout(
             legend=dict(
@@ -99,8 +99,53 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
                 
         st.plotly_chart(fig, use_container_width=True)
 
+    with st.container():
+        #ploty fig for relative humid
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=consumption_df['settlement_datetime'], y=consumption_df['reading'], name='Grid Consumption kWh',marker_color='#085A9D',fill='tozeroy',yaxis="y1"))
+        fig.add_trace(go.Scatter(x=temp_df['datetime'], y=temp_df['rel_hum'], mode='lines', name='Relative Humidity %',marker_color='#e37474',yaxis='y2'))
+        
+    
+        #update legend position
+        fig.update_layout(
+            legend=dict(
+                yanchor="top",
+                y=1.1,
+                x=0,
+                orientation='h'
+            ),
+
+            yaxis=dict(
+                title="kWh",
+                titlefont=dict(
+                    color="#4C6271"
+                ),
+                tickfont=dict(
+                    color="#4C6271"
+                )
+            ),
+
+            yaxis2=dict(
+                title="Relative Humidity %",
+                titlefont=dict(
+                    color="#4C6271"
+                ),
+                tickfont=dict(
+                    color="#4C6271"
+                ),
+                anchor="x",
+                overlaying="y",
+                side="right",
+                position=1
+            )
+        )
+                
+        st.plotly_chart(fig, use_container_width=True)
+
+
     #display temp metrics
     with st.container():
+        
 
         col1, col2, col3 = st.columns(3)
 
