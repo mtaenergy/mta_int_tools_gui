@@ -11,4 +11,3 @@ plotly
 azure-identity
 azure-keyvault-secrets
 azure-keyvault-certificates
-

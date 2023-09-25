@@ -13,6 +13,7 @@ from mtatk.mta_class_nmi import NMI
 
 img_path = "app/imgs/400dpiLogo.jpg"
 
+
 @measure_execution_time
 def dislay_solar_data(solar_sites_df: pd.DataFrame):
 
@@ -31,12 +32,22 @@ def dislay_solar_data(solar_sites_df: pd.DataFrame):
 
         with col2:
             end_date=st.date_input("End Date",value=pd.to_datetime('today'),on_change=clear_flag())
+            #add 1 day to end date
+            end_date=end_date+pd.Timedelta(days=1)
             end_date_dt=pd.to_datetime(end_date)
 
         with col3:
             site=st.selectbox("Select a site",options=solar_sites_list,on_change=clear_flag())
 
 
+    # raise error if start date is after end date
+    if start_date > end_date:
+        st.error("Start date must be before end date")
+        st.error(f"Start date: {start_date}")
+        st.error(f"End date: {end_date}")
+        return
+
+    
 
     #get solar data df
     solar_df = get_solar_generation_data(site=site, start_date=start_date, end_date=end_date)
@@ -131,7 +142,6 @@ def solar_page():
 
 
 
-setup_session_states()
 
-if __name__ == "__main__":
-    solar_page()
+setup_session_states()
+solar_page()
