@@ -16,12 +16,14 @@ img_path = "app/imgs/400dpiLogo.jpg"
 @measure_execution_time
 def dislay_temp_data(weather_sites_df: pd.DataFrame):
 
-    #nmi site list
+    customer_list = weather_sites_df['master_customer'].unique().tolist()
+
+    #site site list
     sites_list = weather_sites_df['nmi'].unique().tolist()
     
     #container to store date and store selection
     with st.container():
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
 
         with col1:
             start_date=st.date_input("Start Date",value=pd.to_datetime('today')-pd.Timedelta(days=3))
@@ -32,8 +34,16 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
             end_date=end_date+pd.Timedelta(days=1)
 
         with col3:
-            nmi=st.selectbox("Select a site",options=sites_list)
-            site = weather_sites_df[weather_sites_df['nmi']==nmi]['site_alias'].values[0] #set site as corresponding site name for nmi
+            customer=st.selectbox("Select a customer",options=customer_list)
+
+        with col4:
+            if customer != 'Select a customer':
+                sites_list = weather_sites_df[weather_sites_df['master_customer']==customer]['site_alias'].unique().tolist()
+
+                #order sites_list
+                sites_list.sort()
+                
+                site=st.selectbox("Select a site",options=sites_list)
 
 
     # raise error if start date is after end date
@@ -51,6 +61,9 @@ def dislay_temp_data(weather_sites_df: pd.DataFrame):
 
     #sort by datetime
     temp_df.sort_values(by='datetime',inplace=True)
+
+    #get nmi
+    nmi = weather_sites_df[weather_sites_df['site_alias']==site]['nmi'].values[0]
 
     #get consumption data
     consumption_df = get_nem12_data(nmi=nmi, start_date=start_date, end_date=end_date, nmi_suffix='export_kwh')
