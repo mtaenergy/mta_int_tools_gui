@@ -1,6 +1,0 @@
-*.pem
-*.yaml
-*.pyc
-
-requirements.txt
-*.drawio*
