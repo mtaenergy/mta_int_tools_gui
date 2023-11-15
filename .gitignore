@@ -1,0 +1,15 @@
+*.pem
+*.yaml
+*.pyc
+
+*.txt
+*.pyc
+*.pyc
+
+*.drawio
+*.bkp
+*.dtmp
+
+*.pyc
+*pycache*
+*.pyc

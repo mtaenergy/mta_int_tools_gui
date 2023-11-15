@@ -1,0 +1,13 @@
+altair
+click
+streamlit
+streamlit-authenticator==0.2.2
+streamlit_autorefresh
+pandas
+protobuf
+geopy
+folium
+plotly
+azure-identity
+azure-keyvault-secrets
+azure-keyvault-certificates
