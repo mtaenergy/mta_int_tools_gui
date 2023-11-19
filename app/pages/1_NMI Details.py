@@ -127,7 +127,7 @@ def nmi_page():
                         #setup site and nmi class using nmi_in
                         site_id = get_site_id(nmi=nmi_in)
                         site = mtatk.mta_class_site.Site(site_id=site_id)
-                        nmi = mtatk.mta_class_nmi.NMI(nmi=site.site_details.nmi, start_date=start_dt_in, end_date=end_dt_in,api_con = api_con)
+                        nmi = mtatk.mta_class_nmi.NMI(nmi=site.site_details.nmi, start_date=start_dt_in, end_date=end_dt_in)
 
 
                         nmi_details = nmi.standing_data.master_data
@@ -449,6 +449,7 @@ def nmi_page():
                     )
 
             except:
+                #raise Exception('Error in NMI Details page')
                 pass
 
 setup_session_states()
