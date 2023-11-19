@@ -238,25 +238,25 @@ def get_cost_stat(lookback_op: str)-> float:
     #casewhere where depending on the lookback option chosen, the query will be different
     if lookback_op =="Last Month":
         query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last 3 Months":
         query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last 6 Months":
         query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last Year":
         query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
                     "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
     else:
@@ -265,7 +265,7 @@ def get_cost_stat(lookback_op: str)-> float:
     #logging.info(query)
 
     #retrieve value from sql
-    total_cost = sql_con.query_sql(query=query,database='timeseries')
+    total_cost = sql_con.query_sql(query=query,database='billing')
 
     #convert to float 
     total_cost_flt= float(total_cost.iloc[0].round(2))
@@ -289,28 +289,28 @@ def get_consump_stat(lookback_op: str)-> float:
     #casewhere where depending on the lookback option chosen, the query will be different
     if lookback_op =="Last Month":
         query  = ("SELECT SUM(volume) as total_consump "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE charge_group = 'Commodity' "
                   "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last 3 Months":
         query  = ("SELECT SUM(volume) as total_consump "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE charge_group = 'Commodity' "
                   "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last 6 Months":
         query  = ("SELECT SUM(volume) as total_consump "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE charge_group = 'Commodity' "
                   "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last Year":
         query  = ("SELECT SUM(volume) as total_consump "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE charge_group = 'Commodity' "
                   "AND bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
                     "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
@@ -320,7 +320,7 @@ def get_consump_stat(lookback_op: str)-> float:
     #logging.info(query)
 
     #retrieve value from sql
-    total_consump = sql_con.query_sql(query=query,database='timeseries')
+    total_consump = sql_con.query_sql(query=query,database='billing')
 
     #convert to float 
     total_consump_flt= float(total_consump.iloc[0].round(2))
@@ -344,28 +344,28 @@ def get_carbon_stat(lookback_op: str)-> float:
     #casewhere where depending on the lookback option chosen, the query will be different
     if lookback_op =="Last Month":
         query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE charge_name ='Carbon' "
                   "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last 3 Months":
         query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE charge_name ='Carbon' "
                   "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last 6 Months":
         query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE charge_name ='Carbon' "
                   "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last Year":
         query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
-                  "FROM mtae_ops_billing_billing_records_prod "
+                  "FROM vw_billing_records_summary "
                   "WHERE charge_name ='Carbon' "
                   "AND bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
                     "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
@@ -375,7 +375,7 @@ def get_carbon_stat(lookback_op: str)-> float:
     #logging.info(query)
 
     #retrieve value from sql
-    total_carbon = sql_con.query_sql(query=query,database='timeseries')
+    total_carbon = sql_con.query_sql(query=query,database='billing')
 
     #convert to float 
     total_carbon_flt= float(total_carbon.iloc[0].round(2))
@@ -390,7 +390,7 @@ def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
     """Summary of get_billing_records_prod_df: Function to get billing_records_prod data based on lookback option selected and columns chosen
 
     Args:
-        columns (str): string of columns to select from table alongside bill_run_end_date and master_customer
+        columns (str): string of columns to select from table alongside bill_run_end_date and billed_entity_alias
         lookback_op (str): lookback option
 
     Returns:
@@ -404,7 +404,7 @@ def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
     current_month = current_date.month
 
     #setup start of query
-    query = (f"SELECT [bill_run_end_date],[master_customer],{columns} FROM mtae_ops_billing_billing_records_prod ")
+    query = (f"SELECT [bill_run_end_date],[billed_entity_alias],{columns} FROM vw_billing_records_summary ")
 
     #casewhere where depending on the lookback option chosen, the query will be different
     if lookback_op =="Last Month":
@@ -450,13 +450,13 @@ def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
 
 
     #retrieve df from sql
-    billing_df = sql_con.query_sql(query=query,database='timeseries')
+    billing_df = sql_con.query_sql(query=query,database='billing')
 
     #drop date columns
     billing_df.drop(['bill_run_end_date'],axis=1, inplace=True)
 
     #update Joinpro and chemist warehouse if needed
-    billing_df['master_customer'].replace({'JOINPRO AUSTRALIA PTY LTD':'Joinpro Australia Pty Ltd',
+    billing_df['billed_entity_alias'].replace({'JOINPRO AUSTRALIA PTY LTD':'Joinpro Australia Pty Ltd',
                                            'Chemist Warehouse ': 'Chemist Warehouse Pty Ltd'},inplace=True)
 
     return billing_df
@@ -469,14 +469,14 @@ def get_customer_list()-> list:
         list: list of customers"""
 
     #setup query
-    table_name="mtae_ops_billing_nmi_standing_data_prod"
+    table_name="customer"
     query = (f"SELECT * FROM {table_name}")
 
     #get customer data
-    customer_df=sql_con.query_sql(query=query,database='standingdata')
+    customer_df=sql_con.query_sql(query=query,database='billing')
 
     #setup list
-    customer_list = customer_df['master_customer'].unique().tolist()
+    customer_list = customer_df['customer_alias'].unique().tolist()
 
     return customer_list
 
@@ -489,47 +489,16 @@ def get_nmi_list()-> list:
     """
 
 
-
     #setup query
-    table_name="mtae_ops_billing_nmi_standing_data_prod"
-    query = (f"SELECT * FROM {table_name}")
+    table_name="site"
+    query = (f"SELECT * FROM {table_name} WHERE site_status='Active'")
 
     #get customer data
-    customer_df=sql_con.query_sql(query=query,database='standingdata')
-    nmi_list =  customer_df['nmi'].unique().tolist()
+    customer_df=sql_con.query_sql(query=query,database='billing')
+    nmi_list =  customer_df['site_nmi'].unique().tolist()
 
     return nmi_list
 
-@st.cache_data
-def check_active_nmi(nmi: str) ->bool:
-    """Summary of check_active_nmi: Function to check if nmi is active as of today
-
-    Args:
-        nmi (str): nmi to check
-
-    Returns:
-        bool: True if active, False if not active
-    """
-
-    #get current date
-    current_day = date.today().strftime("%Y-%m-%d")
-
-    #get data with nmi frmp data
-    table_name= "mtae_ops_nmi_frmp_dates"
-    active_nmis_query=(f"SELECT * FROM {table_name} "
-                    f"WHERE frmp_end_date >= '{current_day}'")
-
-    #get all nmis that have a frmp_end_date after the end_date of our query
-    active_nmis_df = sql_con.query_sql(query=active_nmis_query,database='standingdata')
-
-    #get list of active nmi's
-    active_nmi_list=active_nmis_df['nmi'].unique().tolist()
-
-    #check if nmi is in active list
-    if nmi in active_nmi_list:
-        return True
-    else:
-        return False
 
 @st.cache_data
 def get_nmi_msats_data(nmi: str) -> pd.DataFrame:
@@ -589,13 +558,13 @@ def get_nmi_customer(nmi: str)-> pd.DataFrame:
     """
 
     #setup query
-    table_name="mtae_ops_billing_nmi_standing_data_prod"
+    table_name="site"
     query = (f"SELECT * FROM {table_name} "
-             f"WHERE nmi='{nmi}' "
-             f"ORDER BY creation_date desc")
+             f"WHERE site_nmi='{nmi}' "
+             f"ORDER BY site_live_date desc")
 
     #get customer data
-    nmi_customer_df=sql_con.query_sql(query=query,database='standingdata')
+    nmi_customer_df=sql_con.query_sql(query=query,database='billing')
 
     #return the top row as it is the most up to date
     return nmi_customer_df.iloc[0]
@@ -783,25 +752,15 @@ def get_customer_sites(billied_entity_alias: str)-> pd.DataFrame:
         pd.DataFrame: dataframe of sites for customer
     """
 
-    # #setup query
-    # table_name="site"
-    # query = (f"SELECT * FROM {table_name} "
-    #          f"WHERE billed_entity_alias='{billied_entity_alias}' "
-    #          f"ORDER BY site_live_date desc")
-    
-
-    # # get df of sites from specific customer
-    # customer_bill_df = sql_con.query_sql(query=query,database='billing')
-
 
     #setup query
-    table_name="mtae_ops_billing_nmi_standing_data_prod"
+    table_name="site"
     query = (f"SELECT [site_alias] FROM {table_name} "
-             f"WHERE master_customer = '{billied_entity_alias}' "
-             "ORDER BY creation_date")
+             f"WHERE billed_entity_alias = '{billied_entity_alias}' "
+             "ORDER BY site_live_date desc")
 
     #get sites series
-    sites=sql_con.query_sql(query=query,database='standingdata')
+    sites=sql_con.query_sql(query=query,database='billing')
 
     #drop duplicates
     sites.drop_duplicates(inplace=True,keep='last')
@@ -823,47 +782,21 @@ def get_site_nmis(site_alias: str)-> pd.DataFrame:
         pd.DataFrame: dataframe of nmis for site
     """
 
-    # #setup query
-    # table_name="site"
-    # query = (f"SELECT * FROM {table_name} "
-    #          f"WHERE site_alias='{site_alias}' "
-    #          f"ORDER BY site_live_date desc")
-    
-    # # get df of nmis from specific site
-    # site_bill_df = sql_con.query_sql(query=query,database='billing')
-
-
     #get current date
     current_day = date.today().strftime("%Y-%m-%d")
 
     #setup query
-    table_name="mtae_ops_billing_nmi_standing_data_prod"
+    table_name="site"
     query = (f"SELECT * FROM {table_name} "
-             f"WHERE site_alias='{site_alias}'")
+             f"WHERE site_alias='{site_alias}' AND site_status='Active'")
 
     #get customer data
-    customer_df=sql_con.query_sql(query=query,database='standingdata')
-    customer_nmis =  customer_df['nmi'].unique().tolist()
-
-    #get data with nmi frmp data
-    table_name= "mtae_ops_nmi_frmp_dates"
-    active_nmis_query=(f"SELECT * FROM {table_name} "
-                    f"WHERE frmp_end_date >= '{current_day}'")
-
-    #get all nmis that have a frmp_end_date after the end_date of our query
-    active_nmis_df = sql_con.query_sql(query=active_nmis_query,database='standingdata')
-
-    #get list of active nmi's
-    active_nmi_list=active_nmis_df['nmi'].unique().tolist()
-
-    #determine the intersection between customer nmi list and active nmi list
-    nmi_list = list(set(customer_nmis) & set(active_nmi_list))
+    customer_df=sql_con.query_sql(query=query,database='billing')
+    nmi_list =  customer_df['site_nmi'].unique().tolist()
 
     return nmi_list
 
 
-    # #retuen list of nmis
-    # return sorted(site_bill_df['site_nmi'].unique().tolist())
 
 @st.cache_data
 def get_site_id(nmi: str)->str:
@@ -902,7 +835,7 @@ def get_solar_sites()-> pd.DataFrame:
 @st.cache_data
 def get_weather_sites()-> pd.DataFrame:
     table_name='mtae_ops_nmi_weather_stations'
-    query=(f"SELECT nmi, master_customer, site_alias, site_address, weather_stat_name FROM {table_name}")
+    query=(f"SELECT nmi, billed_entity_alias, site_alias, site_address, weather_stat_name FROM {table_name}")
 
     #get weather site data
     weather_sites_df=sql_con.query_sql(query=query,database='standingdata')
