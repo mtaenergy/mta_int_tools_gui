@@ -79,7 +79,7 @@ def home_page():
             elected_period = st.sidebar.radio("Select Period", ("Last Month", "Last 3 Months", "Last 6 Months", "Last Year", "Last FY", "FY to date"))
 
             # collect billing df based on elected period
-            columns='[nmi],[total_cost_ex_gst],[charge_group],[charge_name],[volume],[scaling_factor],[loss_factor]'
+            columns='[site_nmi],[total_cost_ex_gst],[charge_group],[charge_name],[volume]'
             billing_df=get_billing_records_prod_df(columns=columns, lookback_op=elected_period)
 
         #container to select  customer
@@ -89,10 +89,10 @@ def home_page():
 
             with col3:
                 #customer select
-                client_list = billing_df['master_customer'].unique().tolist()
+                client_list = billing_df['billed_entity_alias'].unique().tolist()
                 customer_sel= st.multiselect(label='Filter by customer',options=client_list)
                 if customer_sel!=[]:
-                    customer_df = billing_df[billing_df['master_customer'].isin(customer_sel)]
+                    customer_df = billing_df[billing_df['billed_entity_alias'].isin(customer_sel)]
                 else:
                     customer_df=billing_df.copy()
 
@@ -104,14 +104,14 @@ def home_page():
 
             with col1:
                 #number of serviced sites
-                num_sites = len(customer_df['nmi'].unique().tolist())
+                num_sites = len(customer_df['site_nmi'].unique().tolist())
 
                 st.metric('Number of serviced sites',num_sites)
 
             with col2:
 
                 #group by master customer to get cost per customer
-                cost_df = customer_df.groupby('master_customer').sum()
+                cost_df = customer_df.groupby('billed_entity_alias').sum()
 
                 #total costs
                 total_cost = cost_df['total_cost_ex_gst'].sum()
@@ -124,7 +124,7 @@ def home_page():
             with col3:
                 #filter for only rows with Commodity as charge group
                 consump_df = customer_df.loc[customer_df['charge_group']=='Commodity']
-                consump_df = consump_df.groupby('master_customer').sum()
+                consump_df = consump_df.groupby('billed_entity_alias').sum()
 
                 #total consump
                 total_consump = consump_df['volume'].sum()
@@ -135,22 +135,25 @@ def home_page():
                 st.metric("Total Eletricity Consumption kWh",total_consump_str)
 
             with col4:
+                pass
 
-                #filter for only rows with Carbon as charge name
-                carbon_df = customer_df[customer_df['charge_name']=='Carbon'].copy()
+                #CARBON DATA CURRENTLY MISSING
+                # #filter for only rows with Carbon as charge name
+                # carbon_df = customer_df[customer_df['charge_name']=='Carbon'].copy()
 
-                #create new column which is the multiplication of volume, loss factor and scaling factor
-                carbon_df['carbon_ton'] = carbon_df['volume']*carbon_df['scaling_factor']*carbon_df['loss_factor']/1000
-                carbon_df = carbon_df.groupby('master_customer').sum()
+                # #create new column which is the multiplication of volume, loss factor and scaling factor
+                # carbon_df['carbon_ton'] = carbon_df['volume']*carbon_df['scaling_factor']*carbon_df['loss_factor']/1000
+                # carbon_df = carbon_df.groupby('billed_entity_alias').sum()
 
-                #total carbon
-                total_carbon = carbon_df['carbon_ton'].sum()
+                # #total carbon
+                # total_carbon = carbon_df['carbon_ton'].sum()
 
-                #format float as string
-                total_carbon_str = "{:,.2f}".format(total_carbon)
+                # #format float as string
+                # total_carbon_str = "{:,.2f}".format(total_carbon)
 
-                #total carbon
-                st.metric("Total Carbon Emissions ton",total_carbon_str)
+                # #total carbon
+                # st.metric("Total Carbon Emissions ton",total_carbon_str)
+                
 
         #container with overview charts
         with st.container():
@@ -177,8 +180,8 @@ def home_page():
 
             with col3:
 
-                fig = px.pie(carbon_df, names=carbon_df.index, values='carbon_ton', color=cost_df.index,
-                            title = 'Total Carbon tons by Customer',color_discrete_map=customer_colours_map)
+                # fig = px.pie(carbon_df, names=carbon_df.index, values='carbon_ton', color=cost_df.index,
+                #             title = 'Total Carbon tons by Customer',color_discrete_map=customer_colours_map)
                 
                 #GnBu_r
 
@@ -190,16 +193,16 @@ def home_page():
             billing_commodity = customer_df[customer_df['charge_group'] == 'Commodity']
 
             vwap_df = pd.DataFrame({
-                'commod_$': billing_commodity.groupby('master_customer')['total_cost_ex_gst'].sum(),
-                'commod_kwh': billing_commodity.groupby('master_customer')['volume'].sum()
+                'commod_$': billing_commodity.groupby('billed_entity_alias')['total_cost_ex_gst'].sum(),
+                'commod_kwh': billing_commodity.groupby('billed_entity_alias')['volume'].sum()
             }).reset_index()
 
             vwap_df['vwap_commod'] = vwap_df['commod_$'] / vwap_df['commod_kwh'] * 100
 
-            fig = px.bar(vwap_df, x=vwap_df['master_customer'], y='vwap_commod', 
+            fig = px.bar(vwap_df, x=vwap_df['billed_entity_alias'], y='vwap_commod', 
                             title = 'VWAP Commodity by Customer',
                             labels={
-                                'master_customer': 'Customer',
+                                'billed_entity_alias': 'Customer',
                                 'vwap_commod': 'Commodity VWAP c/kWh'
                             })
             

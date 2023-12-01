@@ -11,3 +11,4 @@ plotly
 azure-identity
 azure-keyvault-secrets
 azure-keyvault-certificates
+git+https://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:x-oauth-basic@github.com/mtaenergy/mtatk.git@main
