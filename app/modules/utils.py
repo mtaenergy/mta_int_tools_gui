@@ -739,6 +739,31 @@ def get_nem12_data(nmi: str, start_date: str, end_date: str, nmi_suffix: str = N
 
     return nem12_df
 
+
+
+@st.cache_data
+def get_site_cost_forecast(nmi: str) -> pd.DataFrame:
+
+    #find the associated site_id for the given nmi
+    table_name ='site'
+
+    query = (f"SELECT site_id FROM {table_name} where site_nmi = '{nmi}'")
+
+    site_id_df = sql_con.query_sql(query=query,database='billing')
+
+    site_id = site_id_df['site_id'].iloc[0]
+
+    #get the associated forecast for the site_id that is the most recent datetime period
+    table_name ='mtae_ops_cost_forecasts'
+
+    query = (f"SELECT * FROM {table_name} where site_id = '{site_id}' and  "
+             f"CAST(datetime AS DATE) = (SELECT MAX(CAST(datetime AS DATE)) from {table_name}) or "
+             f"CAST(datetime AS DATE) = (SELECT DATEADD(DAY,-1,MAX(CAST(datetime AS DATE))) from {table_name})") 
+
+    forecast_df = sql_con.query_sql(query=query,database='timeseries')
+
+    return forecast_df
+
 ## SITE ALIAS FUNCTIONS
 
 @st.cache_data

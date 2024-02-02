@@ -8,7 +8,7 @@ from streamlit import session_state
 from PIL import Image
 import mtatk
 
-from modules.utils import setup_session_states, measure_execution_time, clear_flag, get_nmi_list
+from modules.utils import setup_session_states, measure_execution_time, clear_flag, get_nmi_list, get_site_cost_forecast
 
 ## GLOBAL VARIABLES
 nmi_list =get_nmi_list()
@@ -39,10 +39,11 @@ def forecasting_page():
 
         
         #display search box for NMIs
-        nmi_in = st.selectbox("Select a NMI", nmi_list,on_change=clear_flag())
+        nmi_input = st.selectbox("Select a NMI", nmi_list,on_change=clear_flag())
 
 
         # display graph of load forecast, predispatch cost and price forecast
+        st.table(get_site_cost_forecast(nmi=nmi_input))
 
 
         # on graph, highlight regions where price forecast than the threshold
