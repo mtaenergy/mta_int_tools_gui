@@ -448,9 +448,9 @@ def nmi_page():
                             on_click=set_flag()
                     )
 
-            except:
-                #raise Exception('Error in NMI Details page')
-                pass
+            except Exception as e:
+                st.write("Error occured as a result of: ",e)
+                
 
 setup_session_states()
 nmi_page()
