@@ -4,6 +4,7 @@ import numpy as np
 import base64
 
 import plotly.express as px
+import plotly.graph_objects as go
 from streamlit import session_state
 from PIL import Image
 import mtatk
@@ -37,13 +38,67 @@ def forecasting_page():
             with col2:
                 st.image(Image.open(img_path),use_column_width=True)
 
-        
-        #display search box for NMIs
-        nmi_input = st.selectbox("Select a NMI", nmi_list,on_change=clear_flag())
+    
+        with st.container():
+
+            #display search box for NMIs
+            nmi_input = st.selectbox("Select a NMI", nmi_list,on_change=clear_flag())
 
 
-        # display graph of load forecast, predispatch cost and price forecast
-        st.table(get_site_cost_forecast(nmi=nmi_input))
+            # display graph of load forecast, predispatch cost and price forecast
+            site_forecast_df = get_site_cost_forecast(nmi_input)
+
+            # Create a Plotly figure
+            fig = go.Figure()
+
+            # Add the electricity load trace
+            fig.add_trace(go.Scatter(
+                x=site_forecast_df['datetime'],
+                y=site_forecast_df['load_forecast'],
+                mode='lines+markers',
+                name='Forecasted Load (kWh)',
+                yaxis='y1'  # Use the first y-axis
+            ))
+
+            # Add the price trace on the second y-axis
+            fig.add_trace(go.Scatter(
+                x=site_forecast_df['datetime'],
+                y=site_forecast_df['rrp'],
+                mode='lines+markers',
+                name='Predispatch Price ($)',
+                yaxis='y2'  # Use the second y-axis
+            ))
+
+            # Add the forecasted cost trace on the second y-axis
+            fig.add_trace(go.Scatter(
+                x=site_forecast_df['datetime'],
+                y=site_forecast_df['cost_forecast'],
+                mode='lines+markers',
+                name='Forecasted Cost ($)',
+                yaxis='y2'  # Use the second y-axis
+            ))
+
+            # Define the layout with two y-axes
+            fig.update_layout(
+                title='Forecasted Load and Price',
+                xaxis=dict(title='Date'),
+                yaxis=dict(title='Forecasted Load (kWh)', side='left', showgrid=False),
+                yaxis2=dict(title='Predispatch Price ($)', overlaying='y', side='right', showgrid=False),
+            ) 
+            #update plotly cursor to be vertical
+            fig.update_layout(hovermode="x unified")
+
+            #set legend to be at top
+            fig.update_layout(legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            ))
+
+            #render fig
+            st.plotly_chart(fig, use_container_width=True)
 
 
         # on graph, highlight regions where price forecast than the threshold
