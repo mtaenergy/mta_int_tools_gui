@@ -499,6 +499,25 @@ def get_nmi_list()-> list:
 
     return nmi_list
 
+@st.cache_data
+def get_site_id_list()-> list:
+    """Summary of get_nmi_list: Function to get list of active site ids from billing data as of today
+
+    Returns:
+        list: list of site ids
+    """
+
+
+    #setup query
+    table_name="site"
+    query = (f"SELECT * FROM {table_name} WHERE site_status='Active'")
+
+    #get site id data
+    df=sql_con.query_sql(query=query,database='billing')
+    site_id_list =  df['site_id'].unique().tolist()
+
+    return site_id_list
+
 
 @st.cache_data
 def get_nmi_msats_data(nmi: str) -> pd.DataFrame:
@@ -589,7 +608,6 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
     nmi_participants_df=sql_con.query_sql(query=query,database='standingdata')
 
     return nmi_participants_df
-
 
 def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch pricedata for the market
@@ -739,15 +757,24 @@ def get_nem12_data(nmi: str, start_date: str, end_date: str, nmi_suffix: str = N
 
     return nem12_df
 
-
-
 @st.cache_data
-def get_site_cost_forecast(nmi: str) -> pd.DataFrame:
+def get_site_cost_forecast(nmi: str=None, site_id: str =None) -> pd.DataFrame:
 
     #find the associated site_id for the given nmi
     table_name ='site'
 
-    query = (f"SELECT site_id FROM {table_name} where site_nmi = '{nmi}'")
+    if nmi != None:
+
+        query = (f"SELECT site_id FROM {table_name} where site_nmi = '{nmi}'")
+
+    elif site_id != None:
+
+        query = (f"SELECT site_id FROM {table_name} where site_id = '{site_id}'")
+
+    else:
+        st.error("No nmi or site_id provided")
+        return None
+
 
     site_id_df = sql_con.query_sql(query=query,database='billing')
 
@@ -763,6 +790,20 @@ def get_site_cost_forecast(nmi: str) -> pd.DataFrame:
     forecast_df = sql_con.query_sql(query=query,database='timeseries')
 
     return forecast_df
+
+@st.cache_data
+def get_all_site_forecast() -> pd.DataFrame:
+    #get the associated forecast for the site_id that is the most recent datetime period
+    table_name ='mtae_ops_cost_forecasts'
+
+    query = (f"SELECT * FROM {table_name} where "
+             f"CAST(datetime AS DATE) = (SELECT MAX(CAST(datetime AS DATE)) from {table_name}) or "
+             f"CAST(datetime AS DATE) = (SELECT DATEADD(DAY,-1,MAX(CAST(datetime AS DATE))) from {table_name})") 
+
+    forecast_df = sql_con.query_sql(query=query,database='timeseries')
+
+    return forecast_df
+
 
 ## SITE ALIAS FUNCTIONS
 
@@ -820,8 +861,6 @@ def get_site_nmis(site_alias: str)-> pd.DataFrame:
     nmi_list =  customer_df['site_nmi'].unique().tolist()
 
     return nmi_list
-
-
 
 @st.cache_data
 def get_site_id(nmi: str)->str:

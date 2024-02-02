@@ -9,10 +9,11 @@ from streamlit import session_state
 from PIL import Image
 import mtatk
 
-from modules.utils import setup_session_states, measure_execution_time, clear_flag, get_nmi_list, get_site_cost_forecast
+from modules.utils import setup_session_states, measure_execution_time, clear_flag, get_nmi_list, get_site_id_list, get_site_cost_forecast, get_all_site_forecast, get_site_id
 
 ## GLOBAL VARIABLES
 nmi_list =get_nmi_list()
+site_id_list = get_site_id_list()
 img_path = "app/imgs/400dpiLogo.jpg"
 session_state.live_state=0
 
@@ -44,9 +45,15 @@ def forecasting_page():
             #display search box for NMIs
             nmi_input = st.selectbox("Select a NMI", nmi_list,on_change=clear_flag())
 
+            site_id_input = st.selectbox("Select a Site ID", site_id_list,on_change=clear_flag())
 
-            # display graph of load forecast, predispatch cost and price forecast
-            site_forecast_df = get_site_cost_forecast(nmi_input)
+            if nmi_input:
+
+                site_forecast_df = get_site_cost_forecast(nmi=nmi_input)
+
+            if site_id_input:
+
+                site_forecast_df = get_site_cost_forecast(site_id=site_id_input)
 
             # Create a Plotly figure
             fig = go.Figure()
@@ -100,15 +107,51 @@ def forecasting_page():
             #render fig
             st.plotly_chart(fig, use_container_width=True)
 
+        #add site details and metrics to the page
+        with st.container():
 
-        # on graph, highlight regions where price forecast than the threshold
+            col1, col2 = st.columns(2)
+
+            with col1:
+                #display site details
+                site_id = get_site_id(nmi_input)
+                site = mtatk.Site(site_id)
+                st.subheader("Site Details")
+                st.write(f"**Site ID:** {site_id}")
+                st.write(f"**Site Name:** {site.site_details.alias}")
+                st.write(f"**Customer:** {site.site_details.billed_entity_alias}")
+
+            with col2:
+
+                #get time of peak cost
+                peak_cost_time = site_forecast_df['datetime'][site_forecast_df['cost_forecast'].idxmax()]
+
+                #display site metrics
+                st.subheader("Site Metrics")
+                st.write(f"**Average Load:** {site_forecast_df['load_forecast'].mean():.2f} kWh")
+                st.write(f"**Average Cost:** ${site_forecast_df['cost_forecast'].mean():.2f}/kWh")
+                st.write(f"**Total Cost:** ${site_forecast_df['cost_forecast'].sum():.2f} ")
+                st.write(f"**Peak Cost:** ${site_forecast_df['cost_forecast'].max():.2f} ")
+                st.write(f"**Peak Cost Time:** {peak_cost_time}")
+
+        # on graph, highlight regions where price forecast exceeds the threshold
+            
 
 
         # display tables of top NMI costs for each client 
+        with st.container():
 
+            st.subheader("Top 10 NMIs by Cost")
+            all_site_forecast_df = get_all_site_forecast()
+            
+            #groupby site_id and sum cost
+            total_site_cost = all_site_forecast_df.groupby('site_id')['cost_forecast'].sum().reset_index()
 
+            #sort by cost and get the top 10
+            top_10_sites = total_site_cost.sort_values('cost_forecast',ascending=False).head(10).reset_index(drop=True)
 
-
+            #display the top 10 sites
+            st.table(top_10_sites)
 
 
 setup_session_states()
