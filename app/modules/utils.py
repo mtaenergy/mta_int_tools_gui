@@ -98,7 +98,7 @@ def read_login_pem(file_path:str) -> tuple:
     #logging.info(file_path)
 
     #open login.pem file and append login details to lists
-    with open(f'{file_path}/logins.pem','r') as file:
+    with open(f'{file_path}\\logins.pem','r') as file:
         for line in file:
             line=line.strip()
             name, username, password = line.split(',')
@@ -761,24 +761,24 @@ def get_nem12_data(nmi: str, start_date: str, end_date: str, nmi_suffix: str = N
 def get_site_cost_forecast(nmi: str=None, site_id: str =None) -> pd.DataFrame:
 
     #find the associated site_id for the given nmi
-    table_name ='site'
+    # table_name ='site'
 
-    if nmi != None:
+    # if nmi != None:
 
-        query = (f"SELECT site_id FROM {table_name} where site_nmi = '{nmi}'")
+    #     query = (f"SELECT site_id FROM {table_name} where site_nmi = '{nmi}'")
 
-    elif site_id != None:
+    # elif site_id != None:
 
-        query = (f"SELECT site_id FROM {table_name} where site_id = '{site_id}'")
+    #     query = (f"SELECT site_id FROM {table_name} where site_id = '{site_id}'")
 
-    else:
-        st.error("No nmi or site_id provided")
-        return None
+    # else:
+    #     st.error("No nmi or site_id provided")
+    #     return None
 
 
-    site_id_df = sql_con.query_sql(query=query,database='billing')
+    # site_id_df = sql_con.query_sql(query=query,database='billing')
 
-    site_id = site_id_df['site_id'].iloc[0]
+    # site_id = site_id_df['site_id'].iloc[0]
 
     #get the associated forecast for the site_id that is the most recent datetime period
     table_name ='mtae_ops_cost_forecasts'
