@@ -36,7 +36,7 @@ def query_sql(query: str,sql_conn_str: str)-> pd.DataFrame:
 def request_data():
     query = "SELECT * FROM dbo.mtae_ops_solar_generated_5min ORDER BY datetime DESC"
 
-    sql_conn_str  = "mssql+pyodbc://mtaenergy_admin:Wombat100@mtaenergy.database.windows.net:1433/sqldb-timeseries-prod?driver=ODBC+Driver+17+for+SQL+Server"
+    sql_conn_str  = ""
 
     df = query_sql(query,sql_conn_str)
 
