@@ -103,7 +103,9 @@ def get_logins(session_manager: SessionManager) -> tuple:
     #setup query
     query = "SELECT * FROM users WHERE billed_entity_id ='1200_1'"
 
+
     users_df = pd.DataFrame(session_manager.execute_select(db_name='sqldb-billing-prod',query=query))
+
 
     names_list = users_df['first_name'].tolist()
     username_list = users_df['username'].tolist()
@@ -761,24 +763,24 @@ def get_nem12_data(nmi: str, start_date: str, end_date: str, nmi_suffix: str = N
 def get_site_cost_forecast(nmi: str=None, site_id: str =None) -> pd.DataFrame:
 
     #find the associated site_id for the given nmi
-    table_name ='site'
+    # table_name ='site'
 
-    if nmi != None:
+    # if nmi != None:
 
-        query = (f"SELECT site_id FROM {table_name} where site_nmi = '{nmi}'")
+    #     query = (f"SELECT site_id FROM {table_name} where site_nmi = '{nmi}'")
 
-    elif site_id != None:
+    # elif site_id != None:
 
-        query = (f"SELECT site_id FROM {table_name} where site_id = '{site_id}'")
+    #     query = (f"SELECT site_id FROM {table_name} where site_id = '{site_id}'")
 
-    else:
-        st.error("No nmi or site_id provided")
-        return None
+    # else:
+    #     st.error("No nmi or site_id provided")
+    #     return None
 
 
-    site_id_df = sql_con.query_sql(query=query,database='billing')
+    # site_id_df = sql_con.query_sql(query=query,database='billing')
 
-    site_id = site_id_df['site_id'].iloc[0]
+    # site_id = site_id_df['site_id'].iloc[0]
 
     #get the associated forecast for the site_id that is the most recent datetime period
     table_name ='mtae_ops_cost_forecasts'
