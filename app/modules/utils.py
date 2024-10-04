@@ -48,6 +48,7 @@ def setup_API_con() -> APIConnector:
     #create API Connector object
     api_connector=APIConnector(cert=cert)
 
+
     return api_connector
 
 @st.cache_resource
@@ -103,6 +104,7 @@ def get_logins(session_manager: SessionManager) -> tuple:
     query = "SELECT * FROM users WHERE billed_entity_id ='1200_1'"
 
     users_df = pd.DataFrame(session_manager.execute_select(db_name='sqldb-billing-prod',query=query))
+
     names_list = users_df['first_name'].tolist()
     username_list = users_df['username'].tolist()
     password_list = users_df['hashed_password'].tolist()
@@ -111,7 +113,7 @@ def get_logins(session_manager: SessionManager) -> tuple:
     #return lists
     return names_list,username_list, password_list, email_list
 
-def setup_authentication()-> tuple:
+def setup_authentication():
     """Summary of setup_authentication: Function to setup authentication for app
 
     Returns:
@@ -131,15 +133,15 @@ def setup_authentication()-> tuple:
         "usernames":{}
     }
 
-    for un, name, pw in zip(username_list, names_list, hashed_passwords):
-        user_dict = {"name":name,"password":pw, "email":email_list, "role":["user"]}
+    for un, name, pw, email in zip(username_list, names_list, hashed_passwords, email_list):
+        user_dict = {"name":name,"password":pw, "email":email, "role":["user"]}
         credentials["usernames"].update({un:user_dict})
 
     #logging.info(credentials)
 
     authenticator = stauth.Authenticate(credentials=credentials,cookie_name="mta_gui_cook",key='abcdef',cookie_expiry_days=1)
 
-    return authenticator, name
+    return authenticator
 
 def setup_session_states():
     """_summary_of_setup_session_states: Function to setup session states for app
@@ -149,8 +151,8 @@ def setup_session_states():
     if 'sub_key' not in session_state:
         session_state['sub_key'] = False
 
-    if 'authentication_status' not in session_state:
-        session_state['authentication_status'] = None
+    # if 'authentication_status' not in session_state:
+    #     session_state['authentication_status'] = None
 
     if 'name' not in session_state:
         session_state['name'] = ''
@@ -161,8 +163,8 @@ def setup_session_states():
     if 'display_details' not in session_state:
         session_state['display_details'] = False
 
-    if 'authenticator' not in session_state:
-        session_state['authenticator'] = None
+    # if 'authenticator' not in session_state:
+    #     session_state['authenticator'] = None
 
 
 
@@ -942,8 +944,10 @@ def startup_site():
     username=CREDENTIALS.azure_sql_server_credentials['mta_sql_server_001'].get('username')
     password=CREDENTIALS.azure_sql_server_credentials['mta_sql_server_001'].get('password')
 
+
     #setup SQL connection
     sql_con = setup_SQL_con(username=username,password=password)
+
 
     #setup connection to geolocator API
     geolocator = setup_geolocator()
