@@ -4,11 +4,11 @@ Python file to generate keys for authenticating users using the app
 
 import pickle
 from pathlib import Path
-from app.modules.utils import read_login_pem
+from app.modules.utils import get_logins, SESSION_MANAGER
 
 import streamlit_authenticator as stauth
 
-names_list,username_list, password_list = read_login_pem(file_path=Path(__file__).parent)
+names_list,username_list, password_list = get_logins(SESSION_MANAGER)
 
 hashed_passwords =stauth.Hasher(passwords=password_list).generate()
 

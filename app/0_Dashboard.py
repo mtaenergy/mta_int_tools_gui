@@ -7,6 +7,8 @@ import plotly.graph_objects as go
 import plotly.express as px
 import logging
 
+from mtatk.mta_sql.sql_utils import SessionManager
+
 logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
 logging.getLogger("azure.identity").setLevel(logging.WARNING)
 logging.getLogger("azure.core").setLevel(logging.WARNING)
@@ -34,6 +36,9 @@ img_path = "app/imgs/400dpiLogo.jpg"
 #clear flag to display NMI details
 session_state.display_details=False
 session_state.live_state=0
+
+#set session manager for db commmunication
+session_manager = SessionManager(db_configs=CREDENTIALS.azure_sql_conn_str)
 
 
 def login():
