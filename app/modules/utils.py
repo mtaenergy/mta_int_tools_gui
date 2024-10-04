@@ -16,9 +16,15 @@ import pickle
 import json
 import time
 
+from mtatk.mta_ops import Credentials
+from mtatk.mta_sql.sql_utils import SessionManager
+
+CREDENTIALS = Credentials()
+SESSION_MANAGER = SessionManager(db_configs=CREDENTIALS.azure_sql_conn_str)
+
 
 current_path = Path(__file__).parent.parent.parent
-cert = str(current_path/ "kv-mta-MTAENERGY-Prod-20221111.pem")
+cert = str(current_path/ "31573-Prod.pem")
 
 def measure_execution_time(func):
     def wrapper(*args, **kwargs):
@@ -41,6 +47,7 @@ def setup_API_con() -> APIConnector:
 
     #create API Connector object
     api_connector=APIConnector(cert=cert)
+
 
     return api_connector
 
@@ -80,11 +87,8 @@ def img_to_bytes(img_path: str) -> str:
     encoded = base64.b64encode(img_bytes).decode()
     return encoded
 
-def read_login_pem(file_path:str) -> tuple:
-    """Summary of read_login_pem: Function to read login.pem file and return lists of names, usernames and passwords
-
-    Args:
-        file_path (str): path to login.pem file
+def get_logins(session_manager: SessionManager) -> tuple:
+    """Get logins of users from database
 
     Returns:
         tuple: tuple of lists of names, usernames and passwords
@@ -94,26 +98,24 @@ def read_login_pem(file_path:str) -> tuple:
     names_list =[]
     username_list=[]
     password_list=[]
+    email_list = []
 
-    #logging.info(file_path)
+    #setup query
+    query = "SELECT * FROM users WHERE billed_entity_id ='1200_1'"
 
-    #open login.pem file and append login details to lists
-    with open(f'{file_path}\\logins.pem','r') as file:
-        for line in file:
-            line=line.strip()
-            name, username, password = line.split(',')
-            names_list.append(name)
-            username_list.append(username)
-            password_list.append(password)
 
-    # logging.info(names_list)
-    # logging.info(username_list)
-    # logging.info(password_list)
+    users_df = pd.DataFrame(session_manager.execute_select(db_name='sqldb-billing-prod',query=query))
+
+
+    names_list = users_df['first_name'].tolist()
+    username_list = users_df['username'].tolist()
+    password_list = users_df['hashed_password'].tolist()
+    email_list = users_df['email'].tolist()
 
     #return lists
-    return names_list,username_list, password_list
+    return names_list,username_list, password_list, email_list
 
-def setup_authentication()-> tuple:
+def setup_authentication():
     """Summary of setup_authentication: Function to setup authentication for app
 
     Returns:
@@ -121,27 +123,27 @@ def setup_authentication()-> tuple:
     """
 
     # USER AUTHENTICATION
-    names_list,username_list, _ = read_login_pem(Path(__file__).parent.parent.parent)
+    names_list,username_list, hashed_passwords, email_list = get_logins(session_manager=SESSION_MANAGER)
 
     #load hashed passwords
-    file_path = Path(__file__).parent.parent.parent/"hashed_pw.pkl"
-    with file_path.open("rb") as file:
-        hashed_passwords = pickle.load(file)
+    # file_path = Path(__file__).parent.parent.parent/"hashed_pw.pkl"
+    # with file_path.open("rb") as file:
+    #     hashed_passwords = pickle.load(file)
 
     #setup credentials dict
     credentials = {
         "usernames":{}
     }
 
-    for un, name, pw in zip(username_list, names_list, hashed_passwords):
-        user_dict = {"name":name,"password":pw}
+    for un, name, pw, email in zip(username_list, names_list, hashed_passwords, email_list):
+        user_dict = {"name":name,"password":pw, "email":email, "role":["user"]}
         credentials["usernames"].update({un:user_dict})
 
     #logging.info(credentials)
 
     authenticator = stauth.Authenticate(credentials=credentials,cookie_name="mta_gui_cook",key='abcdef',cookie_expiry_days=1)
 
-    return authenticator, name
+    return authenticator
 
 def setup_session_states():
     """_summary_of_setup_session_states: Function to setup session states for app
@@ -151,8 +153,8 @@ def setup_session_states():
     if 'sub_key' not in session_state:
         session_state['sub_key'] = False
 
-    if 'authentication_status' not in session_state:
-        session_state['authentication_status'] = None
+    # if 'authentication_status' not in session_state:
+    #     session_state['authentication_status'] = None
 
     if 'name' not in session_state:
         session_state['name'] = ''
@@ -163,8 +165,8 @@ def setup_session_states():
     if 'display_details' not in session_state:
         session_state['display_details'] = False
 
-    if 'authenticator' not in session_state:
-        session_state['authenticator'] = None
+    # if 'authenticator' not in session_state:
+    #     session_state['authenticator'] = None
 
 
 
@@ -940,15 +942,14 @@ def startup_site():
     #setup API connection
     api_con = setup_API_con()
 
-    #get default username and password from logins.pem
-    _,username_list, password_list = read_login_pem(Path(__file__).parent.parent.parent)
-
     #use first line credentials as default login
-    username=username_list[0]
-    password=password_list[0]
+    username=CREDENTIALS.azure_sql_server_credentials['mta_sql_server_001'].get('username')
+    password=CREDENTIALS.azure_sql_server_credentials['mta_sql_server_001'].get('password')
+
 
     #setup SQL connection
     sql_con = setup_SQL_con(username=username,password=password)
+
 
     #setup connection to geolocator API
     geolocator = setup_geolocator()

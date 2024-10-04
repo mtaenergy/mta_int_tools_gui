@@ -7,6 +7,8 @@ import plotly.graph_objects as go
 import plotly.express as px
 import logging
 
+from mtatk.mta_sql.sql_utils import SessionManager
+
 logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
 logging.getLogger("azure.identity").setLevel(logging.WARNING)
 logging.getLogger("azure.core").setLevel(logging.WARNING)
@@ -35,22 +37,27 @@ img_path = "app/imgs/400dpiLogo.jpg"
 session_state.display_details=False
 session_state.live_state=0
 
+#set session manager for db commmunication
+session_manager = SessionManager(db_configs=CREDENTIALS.azure_sql_conn_str)
 
-def login():
-    authenticator, name = setup_authentication()
 
-    name, authentication_status, username  = authenticator.login('Login','main')
+def login_widget():
+    logging.info("Login function called")
+    authenticator = setup_authentication()
+
+    #login
+    authenticator.login()
 
     #check auth status
-    if authentication_status ==False:
+    if st.session_state['authentication_status'] ==False:
         st.error("Username/password is incorrect")
 
-    elif authentication_status==None:
+    elif st.session_state['authentication_status']==None:
         st.warning("Please enter a username and password")
 
     else:
         st.success("Login successful")
-        session_state.name=name 
+        session_state.name=st.session_state['name']
         session_state.authenticator = authenticator
         home_page()
 
@@ -59,7 +66,7 @@ def login():
 @measure_execution_time
 def home_page():
 
-    if session_state.authentication_status:
+    if session_state.authentication_status and session_state.authenticator!=None:
         #configure sidebar
         session_state.authenticator.logout("Logout","sidebar",key='unique_key')
         st.sidebar.title(f"Welcome {session_state.name}")
@@ -169,14 +176,14 @@ def home_page():
                             title = 'Total Cost ex GST by Customer',color_discrete_map=customer_colours_map)
                 
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key='total_cost')
 
             with col2:
 
                 fig = px.pie(cost_df, names=consump_df.index, values='volume', color=cost_df.index,
                             title = 'Total Consumption kWh by Customer',color_discrete_map=customer_colours_map)
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key='total_consump')
 
             with col3:
 
@@ -185,7 +192,7 @@ def home_page():
                 
                 #GnBu_r
 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, key='total_carbon')
 
         #container with vwap per customer
         with st.container():
@@ -208,13 +215,12 @@ def home_page():
             
             fig.update_traces(marker_color='#35ABDE')
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key='vwap_commod')
 
 
 setup_session_states()
 
 if not session_state.authentication_status:
-    login()
+    login_widget()
 else:
-    
     home_page()
