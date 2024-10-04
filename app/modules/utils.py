@@ -97,6 +97,7 @@ def get_logins(session_manager: SessionManager) -> tuple:
     names_list =[]
     username_list=[]
     password_list=[]
+    email_list = []
 
     #setup query
     query = "SELECT * FROM users WHERE billed_entity_id ='1200_1'"
@@ -105,9 +106,10 @@ def get_logins(session_manager: SessionManager) -> tuple:
     names_list = users_df['first_name'].tolist()
     username_list = users_df['username'].tolist()
     password_list = users_df['hashed_password'].tolist()
+    email_list = users_df['email'].tolist()
 
     #return lists
-    return names_list,username_list, password_list
+    return names_list,username_list, password_list, email_list
 
 def setup_authentication()-> tuple:
     """Summary of setup_authentication: Function to setup authentication for app
@@ -117,12 +119,12 @@ def setup_authentication()-> tuple:
     """
 
     # USER AUTHENTICATION
-    names_list,username_list, _ = get_logins(session_manager=SESSION_MANAGER)
+    names_list,username_list, hashed_passwords, email_list = get_logins(session_manager=SESSION_MANAGER)
 
     #load hashed passwords
-    file_path = Path(__file__).parent.parent.parent/"hashed_pw.pkl"
-    with file_path.open("rb") as file:
-        hashed_passwords = pickle.load(file)
+    # file_path = Path(__file__).parent.parent.parent/"hashed_pw.pkl"
+    # with file_path.open("rb") as file:
+    #     hashed_passwords = pickle.load(file)
 
     #setup credentials dict
     credentials = {
@@ -130,7 +132,7 @@ def setup_authentication()-> tuple:
     }
 
     for un, name, pw in zip(username_list, names_list, hashed_passwords):
-        user_dict = {"name":name,"password":pw}
+        user_dict = {"name":name,"password":pw, "email":email_list, "role":["user"]}
         credentials["usernames"].update({un:user_dict})
 
     #logging.info(credentials)

@@ -44,13 +44,13 @@ session_manager = SessionManager(db_configs=CREDENTIALS.azure_sql_conn_str)
 def login():
     authenticator, name = setup_authentication()
 
-    name, authentication_status, username  = authenticator.login('Login','main')
+    authenticator.login()
 
     #check auth status
-    if authentication_status ==False:
+    if st.session_state['authentication_status'] ==False:
         st.error("Username/password is incorrect")
 
-    elif authentication_status==None:
+    elif st.session_state['authentication_status']==None:
         st.warning("Please enter a username and password")
 
     else:

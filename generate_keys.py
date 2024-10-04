@@ -8,7 +8,7 @@ from app.modules.utils import get_logins, SESSION_MANAGER
 
 import streamlit_authenticator as stauth
 
-names_list,username_list, password_list = get_logins(SESSION_MANAGER)
+names_list,username_list, password_list, _ = get_logins(SESSION_MANAGER)
 
 hashed_passwords =stauth.Hasher(passwords=password_list).generate()
 
