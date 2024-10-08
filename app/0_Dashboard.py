@@ -46,7 +46,16 @@ def login_widget():
     authenticator = setup_authentication()
 
     #login
-    authenticator.login()
+    result = authenticator.login(location='main',
+                                fields={'Form name': 'Login', 'Username': 'Username', 'Password': 'Password'},
+                                key='unique_key')
+    
+
+    if result is not None:
+        name, authentication_status, username = result
+
+
+    logging.info("Login for authenticator called")
 
     #check auth status
     if st.session_state['authentication_status'] ==False:
@@ -220,7 +229,7 @@ def home_page():
 
 setup_session_states()
 
-if not session_state.authentication_status:
+if session_state.authentication_status != True or session_state.authenticator==None:
     login_widget()
 else:
     home_page()

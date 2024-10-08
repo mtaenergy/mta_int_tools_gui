@@ -122,6 +122,8 @@ def setup_authentication():
         tuple: tuple of authenticator object and name of user
     """
 
+    logging.info("Setting up authentication")
+
     # USER AUTHENTICATION
     names_list,username_list, hashed_passwords, email_list = get_logins(session_manager=SESSION_MANAGER)
 
@@ -143,6 +145,8 @@ def setup_authentication():
 
     authenticator = stauth.Authenticate(credentials=credentials,cookie_name="mta_gui_cook",key='abcdef',cookie_expiry_days=1)
 
+    logging.info(st.session_state)
+
     return authenticator
 
 def setup_session_states():
@@ -153,8 +157,8 @@ def setup_session_states():
     if 'sub_key' not in session_state:
         session_state['sub_key'] = False
 
-    # if 'authentication_status' not in session_state:
-    #     session_state['authentication_status'] = None
+    if 'authentication_status' not in session_state:
+        session_state['authentication_status'] = None
 
     if 'name' not in session_state:
         session_state['name'] = ''
@@ -165,8 +169,8 @@ def setup_session_states():
     if 'display_details' not in session_state:
         session_state['display_details'] = False
 
-    # if 'authenticator' not in session_state:
-    #     session_state['authenticator'] = None
+    if 'authenticator' not in session_state:
+        session_state['authenticator'] = None
 
 
 
@@ -175,6 +179,13 @@ def setup_session_states():
 
 
     #logging.info(f"Session state post setup {session_state}")
+
+# Clear cookies function to be called on app shutdown
+def clear_cookies():
+    # Setting the cookie to empty and its expiration date in the past to effectively delete it
+    st.experimental_set_cookie('mta_gui_cook', '', expires=datetime.datetime(1970, 1, 1))
+
+
 
 @st.cache_data
 def setup_colour_themes()-> dict:
@@ -458,8 +469,10 @@ def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
     billing_df.drop(['bill_run_end_date'],axis=1, inplace=True)
 
     #update Joinpro and chemist warehouse if needed
-    billing_df['billed_entity_alias'].replace({'JOINPRO AUSTRALIA PTY LTD':'Joinpro Australia Pty Ltd',
-                                           'Chemist Warehouse ': 'Chemist Warehouse Pty Ltd'},inplace=True)
+    billing_df['billed_entity_alias'] = billing_df['billed_entity_alias'].replace({
+    'JOINPRO AUSTRALIA PTY LTD': 'Joinpro Australia Pty Ltd',
+    'Chemist Warehouse ': 'Chemist Warehouse Pty Ltd'
+    })
 
     return billing_df
 
