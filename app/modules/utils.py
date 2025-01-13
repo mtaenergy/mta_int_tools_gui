@@ -22,7 +22,6 @@ from mtatk.mta_sql.sql_utils import SessionManager
 CREDENTIALS = Credentials()
 
 current_path = Path(__file__).parent.parent.parent
-cert = str(current_path/ "31573-Prod.pem")
 
 def measure_execution_time(func):
     def wrapper(*args, **kwargs):
@@ -34,20 +33,6 @@ def measure_execution_time(func):
         return result
     return wrapper
 
-
-@st.cache_data
-def setup_API_con() -> APIConnector:
-    """Summary of setup_API_con: Function to setup API Connector object for use in app
-
-    Returns:
-        APIConnector:  API Connector object
-    """
-
-    #create API Connector object
-    api_connector=APIConnector(cert=cert)
-
-
-    return api_connector
 
 @st.cache_data
 def setup_geolocator() -> Nominatim:
@@ -260,8 +245,8 @@ def get_cost_stat(lookback_op: str, session_manager: SessionManager)-> float:
     #logging.info(query)
 
     #retrieve value from sql
-    total_cost = sql_con.query_sql(query=query,database='billing')
-
+    total_cost = pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
+                                                            query=query))
     #convert to float 
     total_cost_flt= float(total_cost.iloc[0].round(2))
 
@@ -326,7 +311,7 @@ def get_consump_stat(lookback_op: str)-> float:
     return total_consump_str
 
 @st.cache_data
-def get_carbon_stat(lookback_op: str)-> float:
+def get_carbon_stat(lookback_op: str, session_manager: SessionManager)-> float:
     """Summary of get_carbon_stat: Function to get total carbon from billing_records_prod based on lookback option selected
 
     Args:
@@ -338,39 +323,45 @@ def get_carbon_stat(lookback_op: str)-> float:
 
     #casewhere where depending on the lookback option chosen, the query will be different
     if lookback_op =="Last Month":
-        query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
-                  "FROM vw_billing_records_summary "
-                  "WHERE charge_name ='Carbon' "
-                  "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
-                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+        query  = text("""SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon 
+                  FROM vw_billing_records_summary 
+                  WHERE charge_name = :charge_name 
+                  AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) 
+                  AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)""")
+        
+        params = {'charge_name':'Carbon'}
         
     elif lookback_op == "Last 3 Months":
-        query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
-                  "FROM vw_billing_records_summary "
-                  "WHERE charge_name ='Carbon' "
-                  "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
-                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
-        
+        query = text("""SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon 
+                        FROM vw_billing_records_summary 
+                        WHERE charge_name = :charge_name 
+                        AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) 
+                        AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)""")
+        params = {'charge_name': 'Carbon'}
+
     elif lookback_op == "Last 6 Months":
-        query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
-                  "FROM vw_billing_records_summary "
-                  "WHERE charge_name ='Carbon' "
-                  "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
-                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
-        
+        query = text("""SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon 
+                        FROM vw_billing_records_summary 
+                        WHERE charge_name = :charge_name 
+                        AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) 
+                        AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)""")
+        params = {'charge_name': 'Carbon'}
+
     elif lookback_op == "Last Year":
-        query  = ("SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon "
-                  "FROM vw_billing_records_summary "
-                  "WHERE charge_name ='Carbon' "
-                  "AND bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
-                    "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
+        query = text("""SELECT SUM(volume*scaling_factor*loss_factor) as total_carbon 
+                        FROM vw_billing_records_summary 
+                        WHERE charge_name = :charge_name 
+                        AND bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) 
+                        AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)""")
+        params = {'charge_name': 'Carbon'}
     else:
         st.error("Invalid date range chosen")
 
     #logging.info(query)
 
     #retrieve value from sql
-    total_carbon = sql_con.query_sql(query=query,database='billing')
+    total_carbon = pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
+                                                              query=query, params=params))
 
     #convert to float 
     total_carbon_flt= float(total_carbon.iloc[0].round(2))
@@ -940,17 +931,13 @@ def convert_df(df: pd.DataFrame)->bytes:
 @st.cache_resource
 def startup_site():
 
-
     #startup auth keys
     setup_session_states()
-
-    #setup API connection
-    api_con = setup_API_con()
 
     #setup connection to geolocator API
     geolocator = setup_geolocator()
 
-    return api_con, sql_con, geolocator
+    return  geolocator
 
 
-api_con, sql_con, geolocator = startup_site()
+geolocator = startup_site()

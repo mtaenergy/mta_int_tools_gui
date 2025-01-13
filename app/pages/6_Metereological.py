@@ -8,7 +8,7 @@ from plotly.subplots import make_subplots
 from streamlit import session_state
 from PIL import Image
 import logging
-from modules.utils import setup_session_states, measure_execution_time,get_weather_sites,get_temperature_data, get_site_id, get_nem12_data, api_con
+from modules.utils import setup_session_states, measure_execution_time,get_weather_sites,get_temperature_data, get_site_id, get_nem12_data
 from mtatk.mta_class_nmi import NMI
 
 img_path = "app/imgs/400dpiLogo.jpg"

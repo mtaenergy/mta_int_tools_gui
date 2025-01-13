@@ -8,7 +8,7 @@ import altair as alt
 import mtatk
 from streamlit import session_state
 from PIL import Image
-from modules.utils import setup_session_states, measure_execution_time, get_solar_generation_data, clear_flag, get_solar_sites,get_site_id, get_nem12_data, api_con
+from modules.utils import setup_session_states, measure_execution_time, get_solar_generation_data, clear_flag, get_solar_sites,get_site_id, get_nem12_data
 
 img_path = "app/imgs/400dpiLogo.jpg"
 
