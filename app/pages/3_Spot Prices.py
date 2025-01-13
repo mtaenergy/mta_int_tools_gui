@@ -40,7 +40,7 @@ states_progress_bar={
     'VIC': 1.0
 }
 
-
+@measure_execution_time
 def display_spot_price_view(state: str):
     #get initial data
     lookback_hours = 24
@@ -106,6 +106,7 @@ def display_spot_price_view(state: str):
                 st.subheader('Pre-Dispatch Metrics')
                 display_df_info(predispatch_df,option='predispatch')
 
+@measure_execution_time
 def display_df_info(df: pd.DataFrame,option: str) -> None:
 
     #CREATE SERIES OF EACH METRIC AND THE CONCAT TO DF

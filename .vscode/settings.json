@@ -29,5 +29,7 @@
         "env.bak{,/**}",
         "venv.bak{,/**}",
         ".vscode{,/**}"
-    ]
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/b16e5cf2-1c20-4292-ba5d-edcd63d83f2b/resourceGroups/rg-mta-streamlit-prod-001/providers/Microsoft.Web/sites/mta-ops-dashboard",
+    "appService.deploySubpath": "."
 }

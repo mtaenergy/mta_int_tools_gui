@@ -2,7 +2,6 @@
 Utilities module to assist the streamlit app
 '''
 from mtatk.api_lib.aemo_api_connector import APIConnector
-from mtatk.mta_sql.sql_connector import SQLConnector
 import streamlit as st
 from streamlit import session_state
 import pandas as pd
@@ -15,13 +14,12 @@ import streamlit_authenticator as stauth
 import pickle
 import json
 import time
+from sqlalchemy import text
 
 from mtatk.mta_ops import Credentials
 from mtatk.mta_sql.sql_utils import SessionManager
 
 CREDENTIALS = Credentials()
-SESSION_MANAGER = SessionManager(db_configs=CREDENTIALS.azure_sql_conn_str)
-
 
 current_path = Path(__file__).parent.parent.parent
 cert = str(current_path/ "31573-Prod.pem")
@@ -50,23 +48,6 @@ def setup_API_con() -> APIConnector:
 
 
     return api_connector
-
-@st.cache_resource
-def setup_SQL_con(username: str, password: str) -> SQLConnector:
-    """ Summary of setup_SQL_con: Function to setup SQL Connector object for use in app
-
-    Args:
-        username (str): username of the account to connect to SQL server
-        password (str): password of the account to connect to SQL server
-
-    Returns:
-        SQLConnector: SQL Connector object
-    """
-
-    #create SQL Connection object
-    sql_con = SQLConnector(username=username,password=password)
-
-    return sql_con
 
 @st.cache_data
 def setup_geolocator() -> Nominatim:
@@ -115,7 +96,7 @@ def get_logins(session_manager: SessionManager) -> tuple:
     #return lists
     return names_list,username_list, password_list, email_list
 
-def setup_authentication():
+def setup_authentication(session_manager: SessionManager) -> tuple:
     """Summary of setup_authentication: Function to setup authentication for app
 
     Returns:
@@ -125,7 +106,7 @@ def setup_authentication():
     logging.info("Setting up authentication")
 
     # USER AUTHENTICATION
-    names_list,username_list, hashed_passwords, email_list = get_logins(session_manager=SESSION_MANAGER)
+    names_list,username_list, hashed_passwords, email_list = get_logins(session_manager=session_manager)
 
     #load hashed passwords
     # file_path = Path(__file__).parent.parent.parent/"hashed_pw.pkl"
@@ -238,7 +219,7 @@ GET FUNCTIONS TO SQL DB
 '''
 
 @st.cache_data
-def get_cost_stat(lookback_op: str)-> float:
+def get_cost_stat(lookback_op: str, session_manager: SessionManager)-> float:
     """Summary of get_cost_stat: Function to get total cost excluding GST  from billing_records_prod based on lookback option selected
 
     Args:
@@ -248,30 +229,31 @@ def get_cost_stat(lookback_op: str)-> float:
         float: total cost excluding GST
     """
 
-    #casewhere where depending on the lookback option chosen, the query will be different
-    if lookback_op =="Last Month":
-        query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
-                  "FROM vw_billing_records_summary "
-                  "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
-                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
-        
+    # case where depending on the lookback option chosen, the query will be different
+    if lookback_op == "Last Month":
+        query = text("SELECT SUM(total_cost_ex_gst) as total_cost "
+                     "FROM vw_billing_records_summary "
+                     "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
+                     "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+
     elif lookback_op == "Last 3 Months":
-        query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
-                  "FROM vw_billing_records_summary "
-                  "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
-                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
-        
+        query = text("SELECT SUM(total_cost_ex_gst) as total_cost "
+                     "FROM vw_billing_records_summary "
+                     "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
+                     "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+
     elif lookback_op == "Last 6 Months":
-        query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
-                  "FROM vw_billing_records_summary "
-                  "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
-                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
-        
+        query = text("SELECT SUM(total_cost_ex_gst) as total_cost "
+                     "FROM vw_billing_records_summary "
+                     "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
+                     "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
+
     elif lookback_op == "Last Year":
-        query  = ("SELECT SUM(total_cost_ex_gst) as total_cost "
-                  "FROM vw_billing_records_summary "
-                  "WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
-                    "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
+        query = text("SELECT SUM(total_cost_ex_gst) as total_cost "
+                     "FROM vw_billing_records_summary "
+                     "WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
+                     "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
+
     else:
         st.error("Invalid date range chosen")
 
@@ -624,6 +606,8 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
 
     return nmi_participants_df
 
+@measure_execution_time
+@st.cache_data
 def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch pricedata for the market
 
@@ -646,6 +630,8 @@ def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
 
     return dispatch_df
 
+@measure_execution_time
+@st.cache_data
 def get_dispatch_demand_data(lookback_hours: int)-> pd.DataFrame:
     """Summary of get_dispatch_data: Function to get the most recent dispatch demand data for the market
 
@@ -668,6 +654,8 @@ def get_dispatch_demand_data(lookback_hours: int)-> pd.DataFrame:
 
     return dispatch_df
 
+@measure_execution_time
+@st.cache_data
 def get_predispatch_data_30min()-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 30min intervals
 
@@ -686,6 +674,8 @@ def get_predispatch_data_30min()-> pd.DataFrame:
 
     return predispatch_df
 
+@measure_execution_time
+@st.cache_data
 def get_predispatch_data_5min()-> pd.DataFrame:
     """Summary of get_predispatch_data: Function to get the most recent predispatch data for the market for 5min intervals
 
@@ -698,6 +688,8 @@ def get_predispatch_data_5min()-> pd.DataFrame:
     query = (f"SELECT INTERVAL_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION,SS_SOLAR_UIGF,SS_WIND_UIGF FROM {table_name} "
              f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})"
              f"ORDER BY INTERVAL_DATETIME asc")
+    
+    print(query)
     
     #get predispatch data
     predispatch_df=sql_con.query_sql(query=query,database='timeseries')
@@ -955,15 +947,6 @@ def startup_site():
     #setup API connection
     api_con = setup_API_con()
 
-    #use first line credentials as default login
-    username=CREDENTIALS.azure_sql_server_credentials['mta_sql_server_001'].get('username')
-    password=CREDENTIALS.azure_sql_server_credentials['mta_sql_server_001'].get('password')
-
-
-    #setup SQL connection
-    sql_con = setup_SQL_con(username=username,password=password)
-
-
     #setup connection to geolocator API
     geolocator = setup_geolocator()
 
@@ -971,7 +954,3 @@ def startup_site():
 
 
 api_con, sql_con, geolocator = startup_site()
-
-
-
-

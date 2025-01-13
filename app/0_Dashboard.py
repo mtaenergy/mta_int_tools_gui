@@ -28,11 +28,6 @@ from modules.utils import *
 #image path
 img_path = "app/imgs/400dpiLogo.jpg"
 
-
-#define list of all clients
-#client_list = ['Select a customer','Best and Less Pty Ltd','TJX Australia Pty Ltd']
-
-
 #clear flag to display NMI details
 session_state.display_details=False
 session_state.live_state=0
@@ -43,7 +38,7 @@ session_manager = SessionManager(db_configs=CREDENTIALS.azure_sql_conn_str)
 
 def login_widget():
     logging.info("Login function called")
-    authenticator = setup_authentication()
+    authenticator = setup_authentication(session_manager=session_manager)
 
     #login
     result = authenticator.login(location='main',
