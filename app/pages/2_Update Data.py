@@ -67,7 +67,9 @@ def update_nmi_sd():
                     match_cols =['nmi']
                     table_name = 'mtae_ops_billing_nmi_standing_data_prod'
 
-                    sql_con.update_to_database(update_cols, match_cols,df=edited_df, database='standingdata', table_name=table_name)
+                    # TODO: FIX THIS!!!
+                    #update the database
+                    # sql_con.update_to_database(update_cols, match_cols,df=edited_df, database='standingdata', table_name=table_name)
 
 def update_page():
 

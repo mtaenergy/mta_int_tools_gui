@@ -1,7 +1,6 @@
 '''
 Utilities module to assist the streamlit app
 '''
-from mtatk.api_lib.aemo_api_connector import APIConnector
 import streamlit as st
 from streamlit import session_state
 import pandas as pd
@@ -204,7 +203,7 @@ GET FUNCTIONS TO SQL DB
 '''
 
 @st.cache_data
-def get_cost_stat(lookback_op: str, session_manager: SessionManager)-> float:
+def get_cost_stat(lookback_op: str)-> float:
     """Summary of get_cost_stat: Function to get total cost excluding GST  from billing_records_prod based on lookback option selected
 
     Args:
@@ -268,28 +267,29 @@ def get_consump_stat(lookback_op: str)-> float:
 
     #casewhere where depending on the lookback option chosen, the query will be different
     if lookback_op =="Last Month":
-        query  = ("SELECT SUM(volume) as total_consump "
+        query  = text("SELECT SUM(volume) as total_consump "
                   "FROM vw_billing_records_summary "
                   "WHERE charge_group = 'Commodity' "
                   "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
+        
     elif lookback_op == "Last 3 Months":
-        query  = ("SELECT SUM(volume) as total_consump "
+        query  = text("SELECT SUM(volume) as total_consump "
                   "FROM vw_billing_records_summary "
                   "WHERE charge_group = 'Commodity' "
                   "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last 6 Months":
-        query  = ("SELECT SUM(volume) as total_consump "
+        query  = text("SELECT SUM(volume) as total_consump "
                   "FROM vw_billing_records_summary "
                   "WHERE charge_group = 'Commodity' "
                   "AND bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last Year":
-        query  = ("SELECT SUM(volume) as total_consump "
+        query  = text("SELECT SUM(volume) as total_consump "
                   "FROM vw_billing_records_summary "
                   "WHERE charge_group = 'Commodity' "
                   "AND bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
@@ -300,7 +300,8 @@ def get_consump_stat(lookback_op: str)-> float:
     #logging.info(query)
 
     #retrieve value from sql
-    total_consump = sql_con.query_sql(query=query,database='billing')
+    total_consump = pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
+                                                                query=query))
 
     #convert to float 
     total_consump_flt= float(total_consump.iloc[0].round(2))
@@ -311,7 +312,7 @@ def get_consump_stat(lookback_op: str)-> float:
     return total_consump_str
 
 @st.cache_data
-def get_carbon_stat(lookback_op: str, session_manager: SessionManager)-> float:
+def get_carbon_stat(lookback_op: str)-> float:
     """Summary of get_carbon_stat: Function to get total carbon from billing_records_prod based on lookback option selected
 
     Args:
@@ -390,43 +391,43 @@ def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
     current_month = current_date.month
 
     #setup start of query
-    query = (f"SELECT [bill_run_end_date],[billed_entity_alias],{columns} FROM vw_billing_records_summary ")
+    query = text(f"SELECT [bill_run_end_date],[billed_entity_alias],{columns} FROM vw_billing_records_summary ")
 
     #casewhere where depending on the lookback option chosen, the query will be different
     if lookback_op =="Last Month":
-        query  = query+ ("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
+        query  = query+ text("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last 3 Months":
-        query  = query + ("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
+        query  = query + text("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last 6 Months":
-        query  = query + ("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
+        query  = query + text("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
                   "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
         
     elif lookback_op == "Last Year":
-        query  = query + ("WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
+        query  = query + text("WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
                     "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
         
     elif lookback_op == "FY to date":
         #if in first half of calendar year
         if current_month <= 6:
-            query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) "
+            query =query + text("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) "
                             " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE()) , 7, 1)")
         #else must be in 2nd half of the year
         else:
-            query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE()), 7, 1) "
+            query =query + text("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE()), 7, 1) "
                             " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE())+1, 7, 1)")
         
     elif lookback_op == "Last FY":
         #if in first half of calendar year
         if current_month <= 6:
-            query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-2, 7, 1) "
+            query =query + text("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-2, 7, 1) "
                             " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE())-1 , 7, 1)")
         #else must be in 2nd half of the year    
         else:
-            query =query + ("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) "
+            query =query + text("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) "
                             " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE()) , 7, 1)")
 
     else:
@@ -436,7 +437,8 @@ def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
 
 
     #retrieve df from sql
-    billing_df = sql_con.query_sql(query=query,database='billing')
+    billing_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
+                                                            query=query))
 
     #drop date columns
     billing_df.drop(['bill_run_end_date'],axis=1, inplace=True)
@@ -458,10 +460,11 @@ def get_customer_list()-> list:
 
     #setup query
     table_name="customer"
-    query = (f"SELECT * FROM {table_name}")
+    query = text(f"SELECT * FROM {table_name}")
 
     #get customer data
-    customer_df=sql_con.query_sql(query=query,database='billing')
+    customer_df=pd.DataFrame(session_manager.execute_query(db_name='sqldb-standingdata-prod',
+                                                            query=query))
 
     #setup list
     customer_list = customer_df['customer_alias'].unique().tolist()
@@ -479,10 +482,11 @@ def get_nmi_list()-> list:
 
     #setup query
     table_name="site"
-    query = (f"SELECT * FROM {table_name} WHERE site_status='Active'")
+    query = text(f"SELECT * FROM {table_name} WHERE site_status='Active'")
 
     #get customer data
-    customer_df=sql_con.query_sql(query=query,database='billing')
+    customer_df=pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
+                                                            query=query))
     nmi_list =  customer_df['site_nmi'].unique().tolist()
 
     return nmi_list
@@ -501,7 +505,8 @@ def get_site_id_list()-> list:
     query = (f"SELECT * FROM {table_name} WHERE site_status='Active'")
 
     #get site id data
-    df=sql_con.query_sql(query=query,database='billing')
+    df=pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
+                                                    query=query))
     site_id_list =  df['site_id'].unique().tolist()
 
     return site_id_list
@@ -520,12 +525,16 @@ def get_nmi_msats_data(nmi: str) -> pd.DataFrame:
 
     #setup query
     table_name="aemo_msats_cats_nmi_data"
-    query=(f"SELECT * FROM {table_name} "
-           f"WHERE nmi='{nmi}' "
-           f"ORDER BY from_date desc")
+    query=text(f"SELECT * FROM {table_name} "
+           "WHERE nmi=:nmi "
+           "ORDER BY from_date desc")
+    
+    params = {'nmi':nmi}
     
     #get msats nmi data
-    nmi_msats_df=sql_con.query_sql(query=query,database='standingdata')
+    nmi_msats_df=pd.DataFrame(session_manager.execute_query(db_name='standingdata',
+                                                            query=query,
+                                                            params=params))
 
     #return the top row as it is the most up to date
     return nmi_msats_df.iloc[0]
@@ -543,12 +552,16 @@ def get_nmi_tariff(nmi: str)-> pd.DataFrame:
 
     #setup query
     table_name="aemo_msats_cats_register_identifier"
-    query = (f"SELECT * FROM {table_name} "
-             f"WHERE nmi='{nmi}' "
-             f"ORDER BY from_date desc")
+    query = text(f"SELECT * FROM {table_name} "
+             "WHERE nmi=:nmi "
+             "ORDER BY from_date desc")
+    
+    params = {'nmi':nmi}
     
     #get nmi register id data
-    nmi_register_df=sql_con.query_sql(query=query,database='standingdata')
+    nmi_register_df=pd.DataFrame(session_manager.execute_query(db_name='sqldb-standingdata-prod',
+                                                            query=query,
+                                                            params=params))
 
     #return the top row as it is the most up to date
     return nmi_register_df.iloc[0]
@@ -566,12 +579,16 @@ def get_nmi_customer(nmi: str)-> pd.DataFrame:
 
     #setup query
     table_name="site"
-    query = (f"SELECT * FROM {table_name} "
-             f"WHERE site_nmi='{nmi}' "
-             f"ORDER BY site_live_date desc")
+    query = text(f"SELECT * FROM {table_name} "
+             "WHERE site_nmi=:nmi "
+             "ORDER BY site_live_date desc")
+    
+    params = {'nmi':nmi}
 
     #get customer data
-    nmi_customer_df=sql_con.query_sql(query=query,database='billing')
+    nmi_customer_df=pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
+                                                               query=query,
+                                                               params=params))
 
     #return the top row as it is the most up to date
     return nmi_customer_df.iloc[0]
@@ -589,11 +606,16 @@ def get_nmi_participants(nmi: str)-> pd.DataFrame:
 
     #setup query
     table_name="aemo_msats_cats_nmi_participant_relations"
-    query = (f"SELECT * FROM {table_name} "
-             f"WHERE nmi='{nmi}'")
+    query = text(f"SELECT * FROM {table_name} "
+             "WHERE nmi=:nmi")
+    
+    params = {'nmi':nmi}
     
     #get participants data
-    nmi_participants_df=sql_con.query_sql(query=query,database='standingdata')
+    nmi_participants_df=pd.DataFrame(session_manager.execute_query(db_name='sqldb-standingdata-prod',
+                                                                    query=query,
+                                                                    params=params))
+                                                                   
 
     return nmi_participants_df
 
@@ -612,13 +634,17 @@ def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_dispatch_price"
     timezone_add = 10 #need to set to convert UTC to AEST
-    query = (f"SELECT SETTLEMENTDATE,REGIONID,RRP FROM {table_name} "
-             f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
-             f"ORDER BY SETTLEMENTDATE asc")
+    query = text(f"SELECT SETTLEMENTDATE,REGIONID,RRP FROM {table_name} "
+             "WHERE SETTLEMENTDATE > DATEADD(HOUR,-:lookback_hours,DATEADD(HOUR,:timezone_add,GETDATE())) "
+             "ORDER BY SETTLEMENTDATE asc")
+    
+    params = {'lookback_hours':lookback_hours, 'timezone_add':timezone_add}
     
     #get dispatch data
-    dispatch_df=sql_con.query_sql(query=query,database='timeseries')
-
+    dispatch_df=pd.DataFrame(session_manager.execute_query(db_name='sqldb-timeseries-prod',
+                                                            query=query,
+                                                            params=params))
+    
     return dispatch_df
 
 @measure_execution_time
@@ -636,12 +662,16 @@ def get_dispatch_demand_data(lookback_hours: int)-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_dispatch_demand"
     timezone_add = 10 #need to set to convert UTC to AEST
-    query = (f"SELECT SETTLEMENTDATE,REGIONID,TOTALDEMAND,AVAILABLEGENERATION FROM {table_name} "
-             f"WHERE SETTLEMENTDATE > DATEADD(HOUR,-{lookback_hours},DATEADD(HOUR,{timezone_add},GETDATE())) "
-             f"ORDER BY SETTLEMENTDATE asc")
+    query = text(f"SELECT SETTLEMENTDATE,REGIONID,TOTALDEMAND,AVAILABLEGENERATION FROM {table_name} "
+             "WHERE SETTLEMENTDATE > DATEADD(HOUR,-:lookback_hours,DATEADD(HOUR,:timezone_add,GETDATE())) "
+             "ORDER BY SETTLEMENTDATE asc")
+    
+    params = {'lookback_hours':lookback_hours, 'timezone_add':timezone_add}
     
     #get dispatch data
-    dispatch_df=sql_con.query_sql(query=query,database='timeseries')
+    dispatch_df=pd.DataFrame(session_manager.execute_query(db_name='sqldb-timeseries-prod',
+                                                            query=query,
+                                                            params=params))
 
     return dispatch_df
 
@@ -656,13 +686,13 @@ def get_predispatch_data_30min()-> pd.DataFrame:
 
     #setup query
     table_name="aemo_emms_predispatch_30min"
-    query = (f"SELECT PRED_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION FROM {table_name} "
-             f"WHERE DATETIME = (SELECT MAX(DATETIME) FROM {table_name}) "
-             f"ORDER BY PRED_DATETIME asc")
-    
-    #get predispatch data
-    predispatch_df=sql_con.query_sql(query=query,database='timeseries')
+    query = text(f"SELECT PRED_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION FROM {table_name} "
+                 f"WHERE DATETIME = (SELECT MAX(DATETIME) FROM {table_name}) "
+                 f"ORDER BY PRED_DATETIME asc")
 
+    #get predispatch data
+    predispatch_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-timeseries-prod',
+                                                                query=query))
     return predispatch_df
 
 @measure_execution_time
@@ -676,15 +706,13 @@ def get_predispatch_data_5min()-> pd.DataFrame:
 
     #setup query
     table_name="aemo_emms_predispatch_5min"
-    query = (f"SELECT INTERVAL_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION,SS_SOLAR_UIGF,SS_WIND_UIGF FROM {table_name} "
-             f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})"
-             f"ORDER BY INTERVAL_DATETIME asc")
-    
-    print(query)
-    
-    #get predispatch data
-    predispatch_df=sql_con.query_sql(query=query,database='timeseries')
+    query = text(f"SELECT INTERVAL_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION,SS_SOLAR_UIGF,SS_WIND_UIGF FROM {table_name} "
+                 f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})"
+                 f"ORDER BY INTERVAL_DATETIME asc")
 
+    #get predispatch data
+    predispatch_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-timeseries-prod',
+                                                                query=query))
     return predispatch_df
 
 @st.cache_data
@@ -693,19 +721,22 @@ def get_solar_generation_data(site: str, start_date: str, end_date: str)-> pd.Da
 
     #if the site is bungaribee
     if site == 'Toll Bungaribee 400kW':
-        query=(f"SELECT datetime,energy_generated_kwh, site_name  FROM {table_name} "
-                f"WHERE datetime >= '{start_date}' "
-                f"AND datetime <= '{end_date}' "
-                f"AND site_id = 'cb8121b3-6a74-4e8c-8ab3-11bc49a1fb8f'") #search for the specific site id for bungaribee
+        query = text(f"SELECT datetime, energy_generated_kwh, site_name FROM {table_name} "
+                     f"WHERE datetime >= :start_date "
+                     f"AND datetime <= :end_date "
+                     f"AND site_id = 'cb8121b3-6a74-4e8c-8ab3-11bc49a1fb8f'")
+        params = {'start_date': start_date, 'end_date': end_date}
     else:
-        query=(f"SELECT datetime,energy_generated_kwh, site_name  FROM {table_name} "
-            f"WHERE datetime >= '{start_date}' "
-            f"AND datetime <= '{end_date}' "
-            f"AND site_name = '{site}'") #search for the specific site id for bungaribee
+        query = text(f"SELECT datetime, energy_generated_kwh, site_name FROM {table_name} "
+                     f"WHERE datetime >= :start_date "
+                     f"AND datetime <= :end_date "
+                     f"AND site_name = :site")
+        params = {'start_date': start_date, 'end_date': end_date, 'site': site}
 
-    
     #get solar data
-    solar_df=sql_con.query_sql(query=query,database='timeseries')
+    solar_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-timeseries-prod',
+                                                          query=query,
+                                                          params=params))
 
     #convert datetime to pandas datetime
     solar_df['datetime']=pd.to_datetime(solar_df['datetime'])
@@ -724,13 +755,16 @@ def get_solar_generation_data(site: str, start_date: str, end_date: str)-> pd.Da
 def get_temperature_data(site: str, start_date: str, end_date: str)-> pd.DataFrame:
     table_name='mtae_ops_temp_60min'
 
-    query=(f"SELECT datetime,temp, rel_hum, site_alias  FROM {table_name} "
-        f"WHERE datetime >= '{start_date}' "
-        f"AND datetime <= '{end_date}' "
-        f"AND site_alias = '{site}'")
+    query = text(f"SELECT datetime, temp, rel_hum, site_alias FROM {table_name} "
+                 f"WHERE datetime >= :start_date "
+                 f"AND datetime <= :end_date "
+                 f"AND site_alias = :site")
+    params = {'start_date': start_date, 'end_date': end_date, 'site': site}
 
     #get temp data
-    temp_df=sql_con.query_sql(query=query,database='timeseries')
+    temp_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-timeseries-prod',
+                                                         query=query,
+                                                         params=params))
 
     #convert datetime to pandas datetime
     temp_df['datetime']=pd.to_datetime(temp_df['datetime'])
@@ -743,49 +777,36 @@ def get_temperature_data(site: str, start_date: str, end_date: str)-> pd.DataFra
 def get_nem12_data(nmi: str, start_date: str, end_date: str, nmi_suffix: str = None)-> pd.DataFrame:
     table_name= 'aemo_msats_mtrd_nem12_prod'
     if nmi_suffix is not None:
-        query = (f"SELECT settlement_datetime, reading, nmi, nmi_suffix FROM {table_name} "
-                f"WHERE nmi = '{nmi}' and settlement_datetime >= '{start_date}' "
-                f"and settlement_datetime < '{end_date}' and nmi_suffix = '{nmi_suffix}'")
+        query = text(f"SELECT settlement_datetime, reading, nmi, nmi_suffix FROM {table_name} "
+                     f"WHERE nmi = :nmi and settlement_datetime >= :start_date "
+                     f"and settlement_datetime < :end_date and nmi_suffix = :nmi_suffix")
+        params = {'nmi': nmi, 'start_date': start_date, 'end_date': end_date, 'nmi_suffix': nmi_suffix}
     else:
-        query = (f"SELECT settlement_datetime, reading, nmi, nmi_suffix FROM {table_name} "
-            f"WHERE nmi = '{nmi}' and settlement_datetime >= '{start_date}' "
-            f"and settlement_datetime < '{end_date}'")
-        
-    nem12_df = sql_con.query_sql(query=query,database='timeseries')
+        query = text(f"SELECT settlement_datetime, reading, nmi, nmi_suffix FROM {table_name} "
+                     f"WHERE nmi = :nmi and settlement_datetime >= :start_date "
+                     f"and settlement_datetime < :end_date")
+        params = {'nmi': nmi, 'start_date': start_date, 'end_date': end_date}
+
+    nem12_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-timeseries-prod',
+                                                          query=query,
+                                                          params=params))
 
     return nem12_df
 
 @st.cache_data
 def get_site_cost_forecast(nmi: str=None, site_id: str =None) -> pd.DataFrame:
 
-    #find the associated site_id for the given nmi
-    # table_name ='site'
-
-    # if nmi != None:
-
-    #     query = (f"SELECT site_id FROM {table_name} where site_nmi = '{nmi}'")
-
-    # elif site_id != None:
-
-    #     query = (f"SELECT site_id FROM {table_name} where site_id = '{site_id}'")
-
-    # else:
-    #     st.error("No nmi or site_id provided")
-    #     return None
-
-
-    # site_id_df = sql_con.query_sql(query=query,database='billing')
-
-    # site_id = site_id_df['site_id'].iloc[0]
-
     #get the associated forecast for the site_id that is the most recent datetime period
     table_name ='mtae_ops_cost_forecasts'
 
-    query = (f"SELECT * FROM {table_name} where site_id = '{site_id}' and  "
-             f"CAST(datetime AS DATE) = (SELECT MAX(CAST(datetime AS DATE)) from {table_name}) or "
-             f"CAST(datetime AS DATE) = (SELECT DATEADD(DAY,-1,MAX(CAST(datetime AS DATE))) from {table_name})") 
+    query = text(f"SELECT * FROM {table_name} where site_id = :site_id and  "
+                 f"CAST(datetime AS DATE) = (SELECT MAX(CAST(datetime AS DATE)) from {table_name}) or "
+                 f"CAST(datetime AS DATE) = (SELECT DATEADD(DAY,-1,MAX(CAST(datetime AS DATE))) from {table_name})")
+    params = {'site_id': site_id}
 
-    forecast_df = sql_con.query_sql(query=query,database='timeseries')
+    forecast_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-timeseries-prod',
+                                                             query=query,
+                                                             params=params))
 
     return forecast_df
 
@@ -794,11 +815,12 @@ def get_all_site_forecast() -> pd.DataFrame:
     #get the associated forecast for the site_id that is the most recent datetime period
     table_name ='mtae_ops_cost_forecasts'
 
-    query = (f"SELECT * FROM {table_name} where "
-             f"CAST(datetime AS DATE) = (SELECT MAX(CAST(datetime AS DATE)) from {table_name}) or "
-             f"CAST(datetime AS DATE) = (SELECT DATEADD(DAY,-1,MAX(CAST(datetime AS DATE))) from {table_name})") 
+    query = text(f"SELECT * FROM {table_name} where "
+                 f"CAST(datetime AS DATE) = (SELECT MAX(CAST(datetime AS DATE)) from {table_name}) or "
+                 f"CAST(datetime AS DATE) = (SELECT DATEADD(DAY,-1,MAX(CAST(datetime AS DATE))) from {table_name})")
 
-    forecast_df = sql_con.query_sql(query=query,database='timeseries')
+    forecast_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-timeseries-prod',
+                                                             query=query))
 
     return forecast_df
 
@@ -819,12 +841,15 @@ def get_customer_sites(billied_entity_alias: str)-> pd.DataFrame:
 
     #setup query
     table_name="site"
-    query = (f"SELECT [site_alias] FROM {table_name} "
-             f"WHERE billed_entity_alias = '{billied_entity_alias}' "
-             "ORDER BY site_live_date desc")
+    query = text(f"SELECT [site_alias] FROM {table_name} "
+                 f"WHERE billed_entity_alias = :billied_entity_alias "
+                 "ORDER BY site_live_date desc")
+    params = {'billied_entity_alias': billied_entity_alias}
 
     #get sites series
-    sites=sql_con.query_sql(query=query,database='billing')
+    sites = pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
+                                                       query=query,
+                                                       params=params))
 
     #drop duplicates
     sites.drop_duplicates(inplace=True,keep='last')
@@ -846,16 +871,16 @@ def get_site_nmis(site_alias: str)-> pd.DataFrame:
         pd.DataFrame: dataframe of nmis for site
     """
 
-    #get current date
-    current_day = date.today().strftime("%Y-%m-%d")
-
     #setup query
     table_name="site"
-    query = (f"SELECT * FROM {table_name} "
-             f"WHERE site_alias='{site_alias}' AND site_status='Active'")
+    query = text(f"SELECT * FROM {table_name} "
+                 f"WHERE site_alias = :site_alias AND site_status = 'Active'")
+    params = {'site_alias': site_alias}
 
     #get customer data
-    customer_df=sql_con.query_sql(query=query,database='billing')
+    customer_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
+                                                             query=query,
+                                                             params=params))
     nmi_list =  customer_df['site_nmi'].unique().tolist()
 
     return nmi_list
@@ -872,12 +897,15 @@ def get_site_id(nmi: str)->str:
     """
     #setup query
     table_name="site"
-    query = (f"SELECT * FROM {table_name} "
-             f"WHERE site_nmi='{nmi}' "
-             f"ORDER BY site_live_date desc")
-    
+    query = text(f"SELECT * FROM {table_name} "
+                 f"WHERE site_nmi = :nmi "
+                 f"ORDER BY site_live_date desc")
+    params = {'nmi': nmi}
+
     # get row containing the desired site id
-    site_id_df = sql_con.query_sql(query=query,database='billing') 
+    site_id_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
+                                                            query=query,
+                                                            params=params))
 
     #get value of site_id
     site_id = site_id_df['site_id'].iloc[0]
@@ -887,20 +915,22 @@ def get_site_id(nmi: str)->str:
 @st.cache_data
 def get_solar_sites()-> pd.DataFrame:
     table_name='mtae_ops_client_solar_sites'
-    query=(f"SELECT * FROM {table_name}")
+    query = text(f"SELECT * FROM {table_name}")
 
     #get solar site data
-    solar_sites_df=sql_con.query_sql(query=query,database='standingdata')
+    solar_sites_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-standingdata-prod',
+                                                                query=query))
 
     return solar_sites_df
 
 @st.cache_data
 def get_weather_sites()-> pd.DataFrame:
     table_name='mtae_ops_nmi_weather_stations'
-    query=(f"SELECT nmi, billed_entity_alias, site_alias, site_address, weather_stat_name FROM {table_name}")
+    query = text(f"SELECT nmi, billed_entity_alias, site_alias, site_address, weather_stat_name FROM {table_name}")
 
     #get weather site data
-    weather_sites_df=sql_con.query_sql(query=query,database='standingdata')
+    weather_sites_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-standingdata-prod',
+                                                                  query=query))
 
     return weather_sites_df
 
@@ -937,7 +967,9 @@ def startup_site():
     #setup connection to geolocator API
     geolocator = setup_geolocator()
 
-    return  geolocator
+    session_manager = SessionManager(CREDENTIALS.azure_sql_conn_str)
+
+    return  session_manager, geolocator
 
 
-geolocator = startup_site()
+session_manager, geolocator = startup_site()
