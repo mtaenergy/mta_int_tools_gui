@@ -373,7 +373,7 @@ def get_carbon_stat(lookback_op: str)-> float:
     return total_carbon_str
 
 @st.cache_data
-def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
+def get_billing_records_prod_df(columns: str, lookback_op: str) -> pd.DataFrame:
     """Summary of get_billing_records_prod_df: Function to get billing_records_prod data based on lookback option selected and columns chosen
 
     Args:
@@ -390,63 +390,57 @@ def get_billing_records_prod_df(columns: str, lookback_op: str)-> pd.DataFrame:
     # Get the current month
     current_month = current_date.month
 
-    #setup start of query
-    query = text(f"SELECT [bill_run_end_date],[billed_entity_alias],{columns} FROM vw_billing_records_summary ")
+    # Setup start of query
+    base_query = f"SELECT [bill_run_end_date],[billed_entity_alias],{columns} FROM vw_billing_records_summary "
 
-    #casewhere where depending on the lookback option chosen, the query will be different
-    if lookback_op =="Last Month":
-        query  = query+ text("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) "
-                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
-        
+    # Case where depending on the lookback option chosen, the query will be different
+    if lookback_op == "Last Month":
+        query = base_query + "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 1, 0) " \
+                             "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)"
     elif lookback_op == "Last 3 Months":
-        query  = query + text("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) "
-                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
-        
+        query = base_query + "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 3, 0) " \
+                             "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)"
     elif lookback_op == "Last 6 Months":
-        query  = query + text("WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) "
-                  "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)")
-        
+        query = base_query + "WHERE bill_run_end_date >= DATEADD(month, DATEDIFF(month, 0, GETDATE()) - 6, 0) " \
+                             "AND bill_run_end_date < DATEADD(month, DATEDIFF(month, 0, GETDATE()), 0)"
     elif lookback_op == "Last Year":
-        query  = query + text("WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) "
-                    "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)")
-        
+        query = base_query + "WHERE bill_run_end_date >= DATEADD(year, DATEDIFF(year, 0, GETDATE()) - 1, 0) " \
+                             "AND bill_run_end_date < DATEADD(year, DATEDIFF(year, 0, GETDATE()), 0)"
     elif lookback_op == "FY to date":
-        #if in first half of calendar year
+        # If in first half of calendar year
         if current_month <= 6:
-            query =query + text("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) "
-                            " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE()) , 7, 1)")
-        #else must be in 2nd half of the year
+            query = base_query + "WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) " \
+                                 "AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE()), 7, 1)"
+        # Else must be in 2nd half of the year
         else:
-            query =query + text("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE()), 7, 1) "
-                            " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE())+1, 7, 1)")
-        
+            query = base_query + "WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE()), 7, 1) " \
+                                 "AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE())+1, 7, 1)"
     elif lookback_op == "Last FY":
-        #if in first half of calendar year
+        # If in first half of calendar year
         if current_month <= 6:
-            query =query + text("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-2, 7, 1) "
-                            " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE())-1 , 7, 1)")
-        #else must be in 2nd half of the year    
+            query = base_query + "WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-2, 7, 1) " \
+                                 "AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1)"
+        # Else must be in 2nd half of the year
         else:
-            query =query + text("WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) "
-                            " AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE()) , 7, 1)")
-
+            query = base_query + "WHERE bill_run_start_date >= DATEFROMPARTS(YEAR(GETDATE())-1, 7, 1) " \
+                                 "AND bill_run_start_date < DATEFROMPARTS(YEAR(GETDATE()), 7, 1)"
     else:
         st.error("Invalid date range chosen")
+        return pd.DataFrame()
 
-    #logging.info(query)
+    # Convert query to text clause
+    query = text(query)
 
+    # Retrieve df from sql
+    billing_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod', query=query))
 
-    #retrieve df from sql
-    billing_df = pd.DataFrame(session_manager.execute_query(db_name='sqldb-billing-prod',
-                                                            query=query))
+    # Drop date columns
+    billing_df.drop(['bill_run_end_date'], axis=1, inplace=True)
 
-    #drop date columns
-    billing_df.drop(['bill_run_end_date'],axis=1, inplace=True)
-
-    #update Joinpro and chemist warehouse if needed
+    # Update Joinpro and Chemist Warehouse if needed
     billing_df['billed_entity_alias'] = billing_df['billed_entity_alias'].replace({
-    'JOINPRO AUSTRALIA PTY LTD': 'Joinpro Australia Pty Ltd',
-    'Chemist Warehouse ': 'Chemist Warehouse Pty Ltd'
+        'JOINPRO AUSTRALIA PTY LTD': 'Joinpro Australia Pty Ltd',
+        'Chemist Warehouse ': 'Chemist Warehouse Pty Ltd'
     })
 
     return billing_df
