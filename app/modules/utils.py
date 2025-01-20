@@ -627,7 +627,7 @@ def get_dispatch_data(lookback_hours: int)-> pd.DataFrame:
 
     #setup query
     table_name="aemo_emms_dispatch_price"
-    timezone_add = 10 #need to set to convert UTC to AEST
+    timezone_add = 11 #need to set to convert UTC to AEST
     query = text(f"SELECT SETTLEMENTDATE,REGIONID,RRP FROM {table_name} "
              "WHERE SETTLEMENTDATE > DATEADD(HOUR,-:lookback_hours,DATEADD(HOUR,:timezone_add,GETDATE())) "
              "ORDER BY SETTLEMENTDATE asc")
@@ -701,7 +701,7 @@ def get_predispatch_data_5min()-> pd.DataFrame:
     #setup query
     table_name="aemo_emms_predispatch_5min"
     query = text(f"SELECT INTERVAL_DATETIME,REGIONID,RRP,TOTALDEMAND,AVAILABLEGENERATION,SS_SOLAR_UIGF,SS_WIND_UIGF FROM {table_name} "
-                 f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name})"
+                 f"WHERE RUN_DATETIME = (SELECT MAX(RUN_DATETIME) FROM {table_name}) "
                  f"ORDER BY INTERVAL_DATETIME asc")
 
     #get predispatch data

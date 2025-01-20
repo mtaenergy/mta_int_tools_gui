@@ -58,17 +58,21 @@ def display_spot_price_view(state: str):
     #drop any rows in predispatch 30min that overlap with predispatch 5min
     predispatch30min_df = predispatch30min_df[~predispatch30min_df['SETTLEMENTDATE'].isin(predispatch5min_df['SETTLEMENTDATE'])]
 
+
     #concatenate dataframes based on rrp
     full_df = pd.concat([dispatch_df,predispatch5min_df,predispatch30min_df], axis=0)
-    #full_df = pd.concat([dispatch_df,predispatch30min_df], axis=0)
     predispatch_df = pd.concat([predispatch5min_df,predispatch30min_df], axis=0)
-    #predispatch_df = pd.concat([predispatch30min_df], axis=0)
+
+    # drop dupes
+    full_df = full_df.drop_duplicates(subset=['SETTLEMENTDATE','REGIONID']).reset_index(drop=True)
+    predispatch_df = predispatch_df.drop_duplicates(subset=['SETTLEMENTDATE','REGIONID']).reset_index(drop=True)
 
     #chop off last row of predispatch df
     predispatch_df=predispatch_df.tail(-10)
 
-    #drop duplicates in full df and reset index
-    full_df = full_df.drop_duplicates(subset=['SETTLEMENTDATE','REGIONID']).reset_index(drop=True)
+    #sort by SETTLMENTDATE
+    full_df = full_df.sort_values(by='SETTLEMENTDATE',ascending=True).reset_index(drop=True)
+    predispatch_df = predispatch_df.sort_values(by='SETTLEMENTDATE',ascending=True).reset_index(drop=True)
 
     #display state table and graph
     with st.empty():
